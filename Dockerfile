@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Node 22+ ships with native fetch, ReadableStream, etc.
 ENV NODE_ENV=production
-ENV PORT=3000
+ENV PORT=3001
 
 # Copy built assets + server script
 COPY --from=builder /app/dist ./dist
