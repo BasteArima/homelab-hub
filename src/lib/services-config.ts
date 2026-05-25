@@ -15,7 +15,6 @@ export const servicesData: Service[] = [
   { id: "omv", name: "OpenMediaVault", group: "System", icon: "HardDrive", localPort: 9315, localPath: "/", domain: "omv.baste.ru", isVps: false, description: "NAS Dashboard" },
   { id: "portainer", name: "Portainer", group: "System", icon: "Container", localPort: 9000, localPath: "/", domain: "portainer.baste.ru", isVps: false, description: "Docker Management" },
   { id: "npm", name: "NPM", group: "System", icon: "System", localPort: 81, localPath: "/", domain: "npm.baste.ru", isVps: false, description: "Nginx Proxy Manager" },
-  { id: "qbittorrent", name: "qBittorrent", group: "System", icon: "Download", localPort: 8282, localPath: "/", domain: "qb.baste.ru", isVps: false, description: "Torrent Client" },
 
   // --- MEDIA & ENTERTAINMENT ---
   { id: "plex", name: "Plex", group: "Media", icon: "PlaySquare", localPort: 32400, localPath: "/web/index.html#!/", domain: "plex.baste.ru", isVps: false, description: "Media Server" },
@@ -27,6 +26,7 @@ export const servicesData: Service[] = [
   { id: "szurus", name: "Szuru S", group: "Media", icon: "ImagePlus", localPort: 9399, localPath: "/", domain: "szs.baste.ru", isVps: false, description: "Image Board S" },
 
   // --- APPS & PRODUCTIVITY ---
+  { id: "qbittorrent", name: "qBittorrent", group: "Apps", icon: "Download", localPort: 8282, localPath: "/", domain: "qb.baste.ru", isVps: false, description: "Torrent Client" },
   { id: "planka", name: "Planka", group: "Apps", icon: "Kanban", localPort: 3000, localPath: "/", domain: "planka.baste.ru", isVps: false, description: "Project Management" },
   { id: "affine", name: "AFFiNE", group: "Apps", icon: "NotebookText", localPort: 3010, localPath: "/", domain: "docs.baste.ru", isVps: false, description: "Notes & Workspace" },
   { id: "tracking", name: "Tracking", group: "Apps", icon: "Gamepad2", localPort: 6585, localPath: "/", domain: "track.baste.ru", isVps: false, description: "Activity Tracking" },
