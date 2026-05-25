@@ -26,6 +26,6 @@ ENV PORT=3001
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/docker-server.mjs ./docker-server.mjs
 
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "docker-server.mjs"]
