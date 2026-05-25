@@ -14,8 +14,8 @@ export const servicesData: Service[] = [
   // --- SYSTEM ---
   { id: "omv", name: "OpenMediaVault", group: "System", icon: "HardDrive", localPort: 9315, localPath: "/", domain: "omv.baste.ru", isVps: false, description: "NAS Dashboard" },
   { id: "portainer", name: "Portainer", group: "System", icon: "Container", localPort: 9000, localPath: "/", domain: "portainer.baste.ru", isVps: false, description: "Docker Management" },
-  { id: "npm", name: "NPM", group: "System", icon: "Route", localPort: 81, localPath: "/", domain: "npm.baste.ru", isVps: false, description: "Nginx Proxy Manager" },
-  { id: "qbittorrent", name: "qBittorrent", group: "Downloads", icon: "Download", localPort: 8282, localPath: "/", domain: "qb.baste.ru", isVps: false, description: "Torrent Client" },
+  { id: "npm", name: "NPM", group: "System", icon: "System", localPort: 81, localPath: "/", domain: "npm.baste.ru", isVps: false, description: "Nginx Proxy Manager" },
+  { id: "qbittorrent", name: "qBittorrent", group: "System", icon: "Download", localPort: 8282, localPath: "/", domain: "qb.baste.ru", isVps: false, description: "Torrent Client" },
 
   // --- MEDIA & ENTERTAINMENT ---
   { id: "plex", name: "Plex", group: "Media", icon: "PlaySquare", localPort: 32400, localPath: "/web/index.html#!/", domain: "plex.baste.ru", isVps: false, description: "Media Server" },
@@ -34,9 +34,9 @@ export const servicesData: Service[] = [
   { id: "element", name: "Element", group: "Apps", icon: "MessageSquare", localPort: 8032, localPath: "/", domain: "element.baste.ru", isVps: false, description: "Matrix Chat Client" },
   
   // --- LOCAL ---
-  { id: "router", name: "Router", group: "System", icon: "Router", localPort: 80, localPath: "/", domain: "192.168.0.1", isVps: false, description: "Network Gateway" },
-  { id: "proxmox", name: "Proxmox", group: "System", icon: "Server", localPort: 8006, localPath: "/", domain: "192.168.0.106", isVps: false, description: "Virtualization" },
-  { id: "discopanel", name: "Discopanel", group: "System", icon: "Box", localPort: 8080, localPath: "/", domain: "192.168.0.108", isVps: false, description: "Local Service" },
+  { id: "router", name: "Router", group: "Local", icon: "Router", localPort: 80, localPath: "/", domain: "192.168.0.1", isVps: false, description: "Network Gateway" },
+  { id: "proxmox", name: "Proxmox", group: "Local", icon: "Server", localPort: 8006, localPath: "/", domain: "192.168.0.106", isVps: false, description: "Virtualization" },
+  { id: "discopanel", name: "Discopanel", group: "Local", icon: "Box", localPort: 8080, localPath: "/", domain: "192.168.0.108", isVps: false, description: "Local Service" },
 
   // --- VPS & EXTERNAL ---
   { id: "vpsru", name: "VPS RU", group: "VPS", icon: "Shield", localPort: 40368, localPath: "/f8W1QeIwx1lkhD1TZQ/", domain: "91.184.244.242", isVps: true, description: "RU Node" },
