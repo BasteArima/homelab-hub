@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  homelab-hub:
+    build: .
+    container_name: homelab-hub
+    ports:
+      - "6232:3001"
+    environment:
+      - PORT=3001
+    restart: unless-stopped
+    # Optional: limit resources on a small homelab box
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '0.5'
+    #       memory: 256M
