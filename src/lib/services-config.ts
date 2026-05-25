@@ -11,24 +11,37 @@ export type Service = {
 };
 
 export const servicesData: Service[] = [
-  { id: "omv", name: "OpenMediaVault", group: "System", icon: "HardDrive", localPort: 9315, localPath: "/", domain: "omv.baste.ru", isVps: false, description: "NAS administration" },
-  { id: "portainer", name: "Portainer", group: "System", icon: "Container", localPort: 9000, localPath: "/", domain: "portainer.baste.ru", isVps: false, description: "Docker management" },
-  { id: "proxmox", name: "Proxmox", group: "System", icon: "Server", localPort: 8006, localPath: "/", domain: "pve.baste.ru", isVps: false, description: "Virtualization" },
-  { id: "uptime", name: "Uptime Kuma", group: "System", icon: "Activity", localPort: 3001, localPath: "/", domain: "status.baste.ru", isVps: false, description: "Service monitoring" },
+  // --- SYSTEM ---
+  { id: "omv", name: "OMV", group: "System", icon: "HardDrive", localPort: 9315, localPath: "/", domain: "omv.baste.ru", isVps: false, description: "NAS Dashboard" },
+  { id: "proxmox", name: "Proxmox", group: "System", icon: "Server", localPort: 8006, localPath: "/", domain: "192.168.0.106", isVps: false, description: "Virtualization" },
+  { id: "portainer", name: "Portainer", group: "System", icon: "Container", localPort: 9000, localPath: "/", domain: "portainer.baste.ru", isVps: false, description: "Docker Management" },
+  { id: "npm", name: "NPM", group: "System", icon: "Route", localPort: 81, localPath: "/", domain: "npm.baste.ru", isVps: false, description: "Nginx Proxy Manager" },
+  { id: "router", name: "Router", group: "System", icon: "Router", localPort: 80, localPath: "/", domain: "192.168.0.1", isVps: false, description: "Network Gateway" },
+  { id: "discopanel", name: "Discopanel", group: "System", icon: "Box", localPort: 8080, localPath: "/", domain: "192.168.0.108", isVps: false, description: "Local Service" },
 
-  { id: "jellyfin", name: "Jellyfin", group: "Media", icon: "Film", localPort: 8096, localPath: "/", domain: "jellyfin.baste.ru", isVps: false, description: "Media streaming" },
-  { id: "plex", name: "Plex", group: "Media", icon: "PlayCircle", localPort: 32400, localPath: "/web", domain: "plex.baste.ru", isVps: false, description: "Media server" },
-  { id: "navidrome", name: "Navidrome", group: "Media", icon: "Music", localPort: 4533, localPath: "/", domain: "music.baste.ru", isVps: false, description: "Music streaming" },
-  { id: "immich", name: "Immich", group: "Media", icon: "Image", localPort: 2283, localPath: "/", domain: "photos.baste.ru", isVps: false, description: "Photo backup" },
+  // --- APPS & PRODUCTIVITY ---
+  { id: "bitwarden", name: "Bitwarden", group: "Apps", icon: "ShieldCheck", localPort: 5687, localPath: "/", domain: "bw.baste.ru", isVps: false, description: "Password Manager" },
+  { id: "planka", name: "Planka", group: "Apps", icon: "Kanban", localPort: 3000, localPath: "/", domain: "planka.baste.ru", isVps: false, description: "Project Management" },
+  { id: "affine", name: "AFFiNE", group: "Apps", icon: "NotebookText", localPort: 3010, localPath: "/", domain: "docs.baste.ru", isVps: false, description: "Notes & Workspace" },
+  { id: "element", name: "Element", group: "Apps", icon: "MessageSquare", localPort: 8032, localPath: "/", domain: "element.baste.ru", isVps: false, description: "Matrix Chat Client" },
+  { id: "tracking", name: "Tracking", group: "Apps", icon: "Gamepad2", localPort: 6585, localPath: "/", domain: "track.baste.ru", isVps: false, description: "Activity Tracking" },
 
-  { id: "qbit", name: "qBittorrent", group: "Downloads", icon: "Download", localPort: 8080, localPath: "/", domain: "qbit.baste.ru", isVps: false, description: "Torrent client" },
-  { id: "sonarr", name: "Sonarr", group: "Downloads", icon: "Tv", localPort: 8989, localPath: "/", domain: "sonarr.baste.ru", isVps: false, description: "TV automation" },
-  { id: "radarr", name: "Radarr", group: "Downloads", icon: "Clapperboard", localPort: 7878, localPath: "/", domain: "radarr.baste.ru", isVps: false, description: "Movie automation" },
-  { id: "prowlarr", name: "Prowlarr", group: "Downloads", icon: "Search", localPort: 9696, localPath: "/", domain: "prowlarr.baste.ru", isVps: false, description: "Indexer manager" },
+  // --- MEDIA & ENTERTAINMENT ---
+  { id: "plex", name: "Plex", group: "Media", icon: "PlaySquare", localPort: 32400, localPath: "/web/index.html#!/", domain: "plex.baste.ru", isVps: false, description: "Media Server" },
+  { id: "jellyfin", name: "Jellyfin", group: "Media", icon: "Film", localPort: 8096, localPath: "/", domain: "jellyfin.baste.ru", isVps: false, description: "Media Streaming" },
+  { id: "shoko", name: "Shoko", group: "Media", icon: "Ticket", localPort: 8111, localPath: "/", domain: "shoko.baste.ru", isVps: false, description: "Anime Collection" },
+  { id: "books", name: "Books", group: "Media", icon: "BookOpen", localPort: 6060, localPath: "/", domain: "books.baste.ru", isVps: false, description: "Library" },
+  { id: "immich", name: "Immich", group: "Media", icon: "Image", localPort: 2283, localPath: "/", domain: "im.baste.ru", isVps: false, description: "Photo Backup" },
+  { id: "szurun", name: "Szuru N", group: "Media", icon: "Images", localPort: 9398, localPath: "/", domain: "sz.baste.ru", isVps: false, description: "Image Board N" },
+  { id: "szurus", name: "Szuru S", group: "Media", icon: "ImagePlus", localPort: 9399, localPath: "/", domain: "szs.baste.ru", isVps: false, description: "Image Board S" },
 
-  { id: "vaultwarden", name: "Vaultwarden", group: "VPS", icon: "KeyRound", localPort: 8222, localPath: "/", domain: "vault.baste.ru", isVps: true, description: "Password vault" },
-  { id: "nextcloud", name: "Nextcloud", group: "VPS", icon: "Cloud", localPort: 8081, localPath: "/", domain: "cloud.baste.ru", isVps: true, description: "File sync" },
-  { id: "ghost", name: "Ghost Blog", group: "VPS", icon: "Newspaper", localPort: 2368, localPath: "/", domain: "blog.baste.ru", isVps: true, description: "Personal blog" },
+  // --- DOWNLOADS ---
+  { id: "qbittorrent", name: "qBittorrent", group: "Downloads", icon: "Download", localPort: 8282, localPath: "/", domain: "qb.baste.ru", isVps: false, description: "Torrent Client" },
+
+  // --- VPS & EXTERNAL ---
+  { id: "vpsru", name: "VPS RU", group: "VPS", icon: "Shield", localPort: 40368, localPath: "/f8W1QeIwx1lkhD1TZQ/", domain: "91.184.244.242", isVps: true, description: "RU Node" },
+  { id: "vps1", name: "VPS 1", group: "VPS", icon: "Shield", localPort: 443, localPath: "/GygvoVsiyXVNKIp/", domain: "vapi.baste.ru", isVps: true, description: "Primary Node" },
+  { id: "vps2", name: "VPS 2", group: "VPS", icon: "ShieldCheck", localPort: 443, localPath: "/K2CzVip24Diinz5/", domain: "vapix.baste.ru", isVps: true, description: "Secondary Node" }
 ];
 
 export function resolveServiceUrl(svc: Service): string {
