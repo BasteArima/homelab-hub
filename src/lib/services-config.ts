@@ -10,39 +10,21 @@ export type Service = {
   description?: string;
 };
 
-export const servicesData: Service[] = [
-  // --- SYSTEM ---
-  { id: "omv", name: "OpenMediaVault", group: "System", icon: "HardDrive", localPort: 9315, localPath: "/", domain: "omv.baste.ru", isVps: false, description: "NAS Dashboard" },
-  { id: "portainer", name: "Portainer", group: "System", icon: "Container", localPort: 9000, localPath: "/", domain: "portainer.baste.ru", isVps: false, description: "Docker Management" },
-  { id: "npm", name: "NPM", group: "System", icon: "System", localPort: 81, localPath: "/", domain: "npm.baste.ru", isVps: false, description: "Nginx Proxy Manager" },
+export async function fetchServices(): Promise<Service[]> {
+  const res = await fetch("/api/services", { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load services: ${res.status}`);
+  return res.json();
+}
 
-  // --- MEDIA & ENTERTAINMENT ---
-  { id: "plex", name: "Plex", group: "Media", icon: "PlaySquare", localPort: 32400, localPath: "/web/index.html#!/", domain: "plex.baste.ru", isVps: false, description: "Media Server" },
-  { id: "jellyfin", name: "Jellyfin", group: "Media", icon: "Film", localPort: 8096, localPath: "/", domain: "jellyfin.baste.ru", isVps: false, description: "Media Streaming" },
-  { id: "shoko", name: "Shoko", group: "Media", icon: "Ticket", localPort: 8111, localPath: "/", domain: "shoko.baste.ru", isVps: false, description: "Anime Collection" },
-  { id: "books", name: "Books", group: "Media", icon: "BookOpen", localPort: 6060, localPath: "/", domain: "books.baste.ru", isVps: false, description: "Library" },
-  { id: "immich", name: "Immich", group: "Media", icon: "Image", localPort: 2283, localPath: "/", domain: "im.baste.ru", isVps: false, description: "Photo Backup" },
-  { id: "szurun", name: "Szuru N", group: "Media", icon: "Images", localPort: 9398, localPath: "/", domain: "sz.baste.ru", isVps: false, description: "Image Board N" },
-  { id: "szurus", name: "Szuru S", group: "Media", icon: "ImagePlus", localPort: 9399, localPath: "/", domain: "szs.baste.ru", isVps: false, description: "Image Board S" },
-
-  // --- APPS & PRODUCTIVITY ---
-  { id: "qbittorrent", name: "qBittorrent", group: "Apps", icon: "Download", localPort: 8282, localPath: "/", domain: "qb.baste.ru", isVps: false, description: "Torrent Client" },
-  { id: "planka", name: "Planka", group: "Apps", icon: "Kanban", localPort: 3000, localPath: "/", domain: "planka.baste.ru", isVps: false, description: "Project Management" },
-  { id: "affine", name: "AFFiNE", group: "Apps", icon: "NotebookText", localPort: 3010, localPath: "/", domain: "docs.baste.ru", isVps: false, description: "Notes & Workspace" },
-  { id: "tracking", name: "Tracking", group: "Apps", icon: "Gamepad2", localPort: 6585, localPath: "/", domain: "track.baste.ru", isVps: false, description: "Activity Tracking" },
-  { id: "bitwarden", name: "Bitwarden", group: "Apps", icon: "ShieldCheck", localPort: 5687, localPath: "/", domain: "bw.baste.ru", isVps: false, description: "Password Manager" },
-  { id: "element", name: "Element", group: "Apps", icon: "MessageSquare", localPort: 8032, localPath: "/", domain: "element.baste.ru", isVps: false, description: "Matrix Chat Client" },
-  
-  // --- LOCAL ---
-  { id: "router", name: "Router", group: "Local", icon: "Router", localPort: 80, localPath: "/", domain: "192.168.0.1", isVps: false, description: "Network Gateway" },
-  { id: "proxmox", name: "Proxmox", group: "Local", icon: "Server", localPort: 8006, localPath: "/", domain: "192.168.0.106", isVps: false, description: "Virtualization" },
-  { id: "discopanel", name: "Discopanel", group: "Local", icon: "Box", localPort: 8080, localPath: "/", domain: "192.168.0.108", isVps: false, description: "Local Service" },
-
-  // --- VPS & EXTERNAL ---
-  { id: "vpsru", name: "VPS RU", group: "VPS", icon: "Shield", localPort: 40368, localPath: "/f8W1QeIwx1lkhD1TZQ/", domain: "91.184.244.242", isVps: true, description: "RU Node" },
-  { id: "vps1", name: "VPS 1", group: "VPS", icon: "Shield", localPort: 443, localPath: "/GygvoVsiyXVNKIp/", domain: "vapi.baste.ru", isVps: true, description: "Primary Node" },
-  { id: "vps2", name: "VPS 2", group: "VPS", icon: "ShieldCheck", localPort: 443, localPath: "/K2CzVip24Diinz5/", domain: "vapix.baste.ru", isVps: true, description: "Secondary Node" }
-];
+export async function saveServices(services: Service[], adminPassword: string): Promise<void> {
+  const res = await fetch("/api/services", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminPassword, services }),
+  });
+  if (res.status === 401) throw new Error("Invalid password");
+  if (!res.ok) throw new Error(`Save failed: ${res.status} ${await res.text()}`);
+}
 
 export function resolveServiceUrl(svc: Service): string {
   if (typeof window === "undefined") return `https://${svc.domain}${svc.localPath}`;
