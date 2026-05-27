@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Search, Globe, Wifi } from "lucide-react";
-import { servicesData } from "@/lib/services-config";
+import { Search, Globe, Wifi, Settings, Loader2 } from "lucide-react";
+import { fetchServices, type Service } from "@/lib/services-config";
 import { ServiceCard } from "@/components/ServiceCard";
+import { AdminPanel } from "@/components/AdminPanel";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -27,9 +28,30 @@ function Index() {
   const [query, setQuery] = useState("");
   const now = useClock();
   const [host, setHost] = useState("");
+  const [services, setServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   useEffect(() => {
     setHost(window.location.hostname);
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchServices()
+      .then((s) => {
+        if (mounted) {
+          setServices(s);
+          setLoadError(null);
+        }
+      })
+      .catch((e) => mounted && setLoadError(e.message))
+      .finally(() => mounted && setLoading(false));
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const isLocal = useMemo(
@@ -43,17 +65,17 @@ function Index() {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return servicesData;
-    return servicesData.filter(
+    if (!q) return services;
+    return services.filter(
       (s) =>
         s.name.toLowerCase().includes(q) ||
         s.group.toLowerCase().includes(q) ||
         s.domain.toLowerCase().includes(q),
     );
-  }, [query]);
+  }, [query, services]);
 
   const grouped = useMemo(() => {
-    const groups = new Map<string, typeof servicesData>();
+    const groups = new Map<string, Service[]>();
     for (const s of filtered) {
       if (!groups.has(s.group)) groups.set(s.group, []);
       groups.get(s.group)!.push(s);
@@ -79,9 +101,19 @@ function Index() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{date}</p>
         </div>
-        <div className="text-right">
-          <div className="font-mono text-4xl font-light tabular-nums text-foreground sm:text-5xl">
-            {time}
+        <div className="flex items-center gap-4 sm:items-end">
+          <button
+            onClick={() => setAdminOpen(true)}
+            className="rounded-xl border border-white/10 bg-white/5 p-2.5 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            title="Manage services"
+            aria-label="Manage services"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+          <div className="text-right">
+            <div className="font-mono text-4xl font-light tabular-nums text-foreground sm:text-5xl">
+              {time}
+            </div>
           </div>
         </div>
       </header>
@@ -95,11 +127,21 @@ function Index() {
           className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
         <kbd className="hidden rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:inline">
-          {filtered.length} / {servicesData.length}
+          {filtered.length} / {services.length}
         </kbd>
       </div>
 
       <div className="space-y-10 pb-16">
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading services…
+          </div>
+        )}
+        {loadError && !loading && (
+          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+            Failed to load services: {loadError}
+          </div>
+        )}
         {grouped.map(([group, items]) => (
           <section key={group}>
             <div className="mb-4 flex items-center gap-3">
@@ -116,12 +158,21 @@ function Index() {
             </div>
           </section>
         ))}
-        {grouped.length === 0 && (
+        {!loading && !loadError && grouped.length === 0 && (
           <div className="py-20 text-center text-sm text-muted-foreground">
-            No services match "{query}"
+            {services.length === 0
+              ? "No services yet. Click the gear icon to add some."
+              : `No services match "${query}"`}
           </div>
         )}
       </div>
+
+      <AdminPanel
+        open={adminOpen}
+        onClose={() => setAdminOpen(false)}
+        services={services}
+        onSaved={setServices}
+      />
     </main>
   );
 }

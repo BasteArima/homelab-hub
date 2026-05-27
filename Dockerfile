@@ -21,10 +21,17 @@ WORKDIR /app
 # Node 22+ ships with native fetch, ReadableStream, etc.
 ENV NODE_ENV=production
 ENV PORT=3001
+ENV DATA_DIR=/app/data
 
 # Copy built assets + server script
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/docker-server.mjs ./docker-server.mjs
+
+# Ensure the persistent data directory exists with seed file
+COPY data ./data
+RUN mkdir -p /app/data && chmod -R 755 /app/data
+
+VOLUME ["/app/data"]
 
 EXPOSE 3001
 

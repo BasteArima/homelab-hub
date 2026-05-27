@@ -8,6 +8,12 @@ services:
       - "6232:3001"
     environment:
       - PORT=3001
+      - DATA_DIR=/app/data
+      # Override in your environment or .env file. Defaults to "admin123".
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+    volumes:
+      # Persist services.json across container rebuilds
+      - ./data:/app/data
     restart: unless-stopped
     # Optional: limit resources on a small homelab box
     # deploy:
