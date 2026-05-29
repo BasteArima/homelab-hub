@@ -173,70 +173,72 @@ export function AdminPanel({ open, onClose, services, onSaved }: Props) {
                       setDragIdx(null);
                       setOverIdx(null);
                     }}
-                    className={`grid grid-cols-1 gap-2 rounded-xl border bg-black/20 p-3 transition-colors md:grid-cols-12 ${
+                    className={`flex flex-col gap-3 rounded-xl border bg-black/20 p-3 transition-colors ${
                       overIdx === idx && dragIdx !== null && dragIdx !== idx
                         ? "border-primary/60 bg-primary/5"
                         : "border-white/10"
                     } ${dragIdx === idx ? "opacity-40" : ""}`}
                   >
-                    <div className="flex items-center justify-center md:col-span-1">
-                      <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing" />
-                    </div>
-                    <Field label="ID" value={svc.id} onChange={(v) => updateField(idx, "id", v)} className="md:col-span-2" />
-                    <Field label="Name" value={svc.name} onChange={(v) => updateField(idx, "name", v)} className="md:col-span-2" />
-                    <Field label="Group" value={svc.group} onChange={(v) => updateField(idx, "group", v)} className="md:col-span-1" />
-                    <Field
-                      label="Icon"
-                      value={svc.icon}
-                      onChange={(v) => updateField(idx, "icon", v)}
-                      hint="lucide.dev"
-                      className="md:col-span-1"
-                    />
-                    <label className="flex flex-col gap-1 md:col-span-1">
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Proto</span>
-                      <select
-                        value={svc.protocol ?? "http"}
-                        onChange={(e) => updateField(idx, "protocol", e.target.value as "http" | "https")}
-                        className="w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
-                      >
-                        <option value="http">http</option>
-                        <option value="https">https</option>
-                      </select>
-                    </label>
-                    <Field
-                      label="Port"
-                      type="number"
-                      value={String(svc.localPort)}
-                      onChange={(v) => updateField(idx, "localPort", Number(v) || 0)}
-                      className="md:col-span-1"
-                    />
-                    <Field label="Path" value={svc.localPath} onChange={(v) => updateField(idx, "localPath", v)} className="md:col-span-1" />
-                    <Field
-                      label="Local IP"
-                      value={svc.localHost || ""}
-                      onChange={(v) => updateField(idx, "localHost", v)}
-                      hint="optional"
-                      className="md:col-span-1"
-                    />
-                    <Field label="Domain" value={svc.domain} onChange={(v) => updateField(idx, "domain", v)} className="md:col-span-1" />
-                    <Field label="Description" value={svc.description || ""} onChange={(v) => updateField(idx, "description", v)} className="md:col-span-1" />
-                    <div className="flex items-end justify-between gap-2 md:col-span-1">
-                      <label className="flex flex-col gap-1">
-                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">VPS</span>
-                        <input
-                          type="checkbox"
-                          checked={svc.isVps}
-                          onChange={(e) => updateField(idx, "isVps", e.target.checked)}
-                          className="h-5 w-5 accent-primary"
-                        />
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-12">
+                      <div className="col-span-2 flex items-center justify-start md:col-span-1 md:justify-center">
+                        <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing" />
+                      </div>
+                      <Field label="ID" value={svc.id} onChange={(v) => updateField(idx, "id", v)} className="md:col-span-2" />
+                      <Field label="Name" value={svc.name} onChange={(v) => updateField(idx, "name", v)} className="md:col-span-2" />
+                      <Field label="Group" value={svc.group} onChange={(v) => updateField(idx, "group", v)} className="md:col-span-2" />
+                      <Field
+                        label="Icon"
+                        value={svc.icon}
+                        onChange={(v) => updateField(idx, "icon", v)}
+                        hint="lucide.dev"
+                        className="md:col-span-2"
+                      />
+                      <label className="flex flex-col gap-1 md:col-span-1">
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Proto</span>
+                        <select
+                          value={svc.protocol ?? "http"}
+                          onChange={(e) => updateField(idx, "protocol", e.target.value as "http" | "https")}
+                          className="w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
+                        >
+                          <option value="http">http</option>
+                          <option value="https">https</option>
+                        </select>
                       </label>
-                      <button
-                        onClick={() => removeService(idx)}
-                        className="rounded-md p-2 text-rose-400 hover:bg-rose-500/10"
-                        title="Delete service"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <Field
+                        label="Port"
+                        type="number"
+                        value={String(svc.localPort)}
+                        onChange={(v) => updateField(idx, "localPort", Number(v) || 0)}
+                        className="md:col-span-1"
+                      />
+                      <Field label="Path" value={svc.localPath} onChange={(v) => updateField(idx, "localPath", v)} className="md:col-span-1" />
+                      <Field
+                        label="Local IP"
+                        value={svc.localHost || ""}
+                        onChange={(v) => updateField(idx, "localHost", v)}
+                        hint="optional"
+                        className="md:col-span-4"
+                      />
+                      <Field label="Domain" value={svc.domain} onChange={(v) => updateField(idx, "domain", v)} className="md:col-span-4" />
+                      <Field label="Description" value={svc.description || ""} onChange={(v) => updateField(idx, "description", v)} className="md:col-span-3" />
+                      <div className="col-span-2 flex items-end justify-between gap-3 md:col-span-1">
+                        <label className="flex flex-col gap-1">
+                          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">VPS</span>
+                          <input
+                            type="checkbox"
+                            checked={svc.isVps}
+                            onChange={(e) => updateField(idx, "isVps", e.target.checked)}
+                            className="h-5 w-5 accent-primary"
+                          />
+                        </label>
+                        <button
+                          onClick={() => removeService(idx)}
+                          className="rounded-md p-2 text-rose-400 hover:bg-rose-500/10"
+                          title="Delete service"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
