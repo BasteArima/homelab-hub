@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Plus, Trash2, X, Save, Lock } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Plus, Trash2, X, Save, Lock, GripVertical, Download, Upload } from "lucide-react";
 import type { Service } from "@/lib/services-config";
 import { saveServices } from "@/lib/services-config";
 
@@ -20,6 +20,8 @@ const EMPTY: Service = {
   domain: "",
   isVps: false,
   description: "",
+  protocol: "http",
+  localHost: "",
 };
 
 export function AdminPanel({ open, onClose, services, onSaved }: Props) {
@@ -28,6 +30,9 @@ export function AdminPanel({ open, onClose, services, onSaved }: Props) {
   const [list, setList] = useState<Service[]>(services);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [overIdx, setOverIdx] = useState<number | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
@@ -48,6 +53,40 @@ export function AdminPanel({ open, onClose, services, onSaved }: Props) {
 
   const removeService = (idx: number) => {
     setList((cur) => cur.filter((_, i) => i !== idx));
+  };
+
+  const moveItem = (from: number, to: number) => {
+    if (from === to || from < 0 || to < 0) return;
+    setList((cur) => {
+      const next = [...cur];
+      const [item] = next.splice(from, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(list, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `homelab-services-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportFile = async (file: File) => {
+    setError(null);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!Array.isArray(parsed)) throw new Error("File must contain a JSON array");
+      setList(parsed as Service[]);
+    } catch (e) {
+      setError(e instanceof Error ? `Import failed: ${e.message}` : "Import failed");
+    }
   };
 
   const handleSave = async () => {
@@ -111,7 +150,38 @@ export function AdminPanel({ open, onClose, services, onSaved }: Props) {
             <div className="flex-1 overflow-y-auto px-6 py-4">
               <div className="space-y-3">
                 {list.map((svc, idx) => (
-                  <div key={idx} className="grid grid-cols-1 gap-2 rounded-xl border border-white/10 bg-black/20 p-3 md:grid-cols-12">
+                  <div
+                    key={idx}
+                    draggable
+                    onDragStart={(e) => {
+                      setDragIdx(idx);
+                      e.dataTransfer.effectAllowed = "move";
+                    }}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "move";
+                      if (overIdx !== idx) setOverIdx(idx);
+                    }}
+                    onDragLeave={() => setOverIdx((cur) => (cur === idx ? null : cur))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      if (dragIdx !== null) moveItem(dragIdx, idx);
+                      setDragIdx(null);
+                      setOverIdx(null);
+                    }}
+                    onDragEnd={() => {
+                      setDragIdx(null);
+                      setOverIdx(null);
+                    }}
+                    className={`grid grid-cols-1 gap-2 rounded-xl border bg-black/20 p-3 transition-colors md:grid-cols-12 ${
+                      overIdx === idx && dragIdx !== null && dragIdx !== idx
+                        ? "border-primary/60 bg-primary/5"
+                        : "border-white/10"
+                    } ${dragIdx === idx ? "opacity-40" : ""}`}
+                  >
+                    <div className="flex items-center justify-center md:col-span-1">
+                      <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground hover:text-foreground active:cursor-grabbing" />
+                    </div>
                     <Field label="ID" value={svc.id} onChange={(v) => updateField(idx, "id", v)} className="md:col-span-2" />
                     <Field label="Name" value={svc.name} onChange={(v) => updateField(idx, "name", v)} className="md:col-span-2" />
                     <Field label="Group" value={svc.group} onChange={(v) => updateField(idx, "group", v)} className="md:col-span-1" />
@@ -122,6 +192,17 @@ export function AdminPanel({ open, onClose, services, onSaved }: Props) {
                       hint="lucide.dev"
                       className="md:col-span-1"
                     />
+                    <label className="flex flex-col gap-1 md:col-span-1">
+                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Proto</span>
+                      <select
+                        value={svc.protocol ?? "http"}
+                        onChange={(e) => updateField(idx, "protocol", e.target.value as "http" | "https")}
+                        className="w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
+                      >
+                        <option value="http">http</option>
+                        <option value="https">https</option>
+                      </select>
+                    </label>
                     <Field
                       label="Port"
                       type="number"
@@ -130,7 +211,14 @@ export function AdminPanel({ open, onClose, services, onSaved }: Props) {
                       className="md:col-span-1"
                     />
                     <Field label="Path" value={svc.localPath} onChange={(v) => updateField(idx, "localPath", v)} className="md:col-span-1" />
-                    <Field label="Domain" value={svc.domain} onChange={(v) => updateField(idx, "domain", v)} className="md:col-span-2" />
+                    <Field
+                      label="Local IP"
+                      value={svc.localHost || ""}
+                      onChange={(v) => updateField(idx, "localHost", v)}
+                      hint="optional"
+                      className="md:col-span-1"
+                    />
+                    <Field label="Domain" value={svc.domain} onChange={(v) => updateField(idx, "domain", v)} className="md:col-span-1" />
                     <Field label="Description" value={svc.description || ""} onChange={(v) => updateField(idx, "description", v)} className="md:col-span-1" />
                     <div className="flex items-end justify-between gap-2 md:col-span-1">
                       <label className="flex flex-col gap-1">
@@ -165,7 +253,32 @@ export function AdminPanel({ open, onClose, services, onSaved }: Props) {
                 {list.length} service{list.length === 1 ? "" : "s"}
                 {error && <span className="ml-3 text-rose-400">{error}</span>}
               </span>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="application/json,.json"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleImportFile(f);
+                    e.target.value = "";
+                  }}
+                />
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-foreground hover:bg-white/5"
+                  title="Import JSON"
+                >
+                  <Upload className="h-4 w-4" /> Import
+                </button>
+                <button
+                  onClick={handleExport}
+                  className="flex items-center gap-2 rounded-lg border border-white/10 px-4 py-2 text-sm text-foreground hover:bg-white/5"
+                  title="Export JSON"
+                >
+                  <Download className="h-4 w-4" /> Export
+                </button>
                 <button
                   onClick={onClose}
                   className="rounded-lg border border-white/10 px-4 py-2 text-sm text-foreground hover:bg-white/5"
@@ -218,6 +331,9 @@ function Field({
           >
             ↗
           </a>
+        )}
+        {hint && hint !== "lucide.dev" && (
+          <span className="text-muted-foreground/50">({hint})</span>
         )}
       </span>
       <input
