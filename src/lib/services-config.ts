@@ -8,6 +8,10 @@ export type Service = {
   domain: string;
   isVps: boolean;
   description?: string;
+  /** "http" or "https" — applied to the resolved URL (both local & remote). Defaults to "http". */
+  protocol?: "http" | "https";
+  /** Optional fixed LAN host/IP for services that run on a different machine than this dashboard. When set, local access uses this host instead of window.location.hostname. */
+  localHost?: string;
 };
 
 export async function fetchServices(): Promise<Service[]> {
@@ -27,6 +31,7 @@ export async function saveServices(services: Service[], adminPassword: string): 
 }
 
 export function resolveServiceUrl(svc: Service): string {
+  const protocol = svc.protocol === "https" ? "https" : "http";
   if (typeof window === "undefined") return `https://${svc.domain}${svc.localPath}`;
   const host = window.location.hostname;
   const isLocal =
@@ -35,8 +40,11 @@ export function resolveServiceUrl(svc: Service): string {
     /^192\.168\./.test(host) ||
     /^10\./.test(host) ||
     /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
-  if (isLocal) return `http://${host}:${svc.localPort}${svc.localPath}`;
-  return `https://${svc.domain}${svc.localPath}`;
+  if (isLocal) {
+    const localHost = svc.localHost && svc.localHost.trim() ? svc.localHost.trim() : host;
+    return `${protocol}://${localHost}:${svc.localPort}${svc.localPath}`;
+  }
+  return `${svc.protocol === "http" ? "http" : "https"}://${svc.domain}${svc.localPath}`;
 }
 
 export async function pingService(domain: string, timeoutMs = 5000): Promise<{ online: boolean; rtt: number | null }> {

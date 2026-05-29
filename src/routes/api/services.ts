@@ -14,7 +14,9 @@ function isValidService(s: unknown): s is Service {
     typeof o.localPath === "string" && o.localPath.length < 500 &&
     typeof o.domain === "string" && o.domain.length < 500 &&
     typeof o.isVps === "boolean" &&
-    (o.description === undefined || (typeof o.description === "string" && o.description.length < 500))
+    (o.description === undefined || (typeof o.description === "string" && o.description.length < 500)) &&
+    (o.protocol === undefined || o.protocol === "http" || o.protocol === "https") &&
+    (o.localHost === undefined || (typeof o.localHost === "string" && o.localHost.length < 253))
   );
 }
 
