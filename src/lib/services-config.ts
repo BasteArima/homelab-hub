@@ -31,7 +31,6 @@ export async function saveServices(services: Service[], adminPassword: string): 
 }
 
 export function resolveServiceUrl(svc: Service): string {
-  const protocol = svc.protocol === "https" ? "https" : "http";
   if (typeof window === "undefined") return `https://${svc.domain}${svc.localPath}`;
   const host = window.location.hostname;
   const isLocal =
@@ -40,6 +39,7 @@ export function resolveServiceUrl(svc: Service): string {
     /^192\.168\./.test(host) ||
     /^10\./.test(host) ||
     /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
+  const protocol = svc.protocol ?? (isLocal ? "http" : "https");
   if (isLocal) {
     const localHost = svc.localHost && svc.localHost.trim() ? svc.localHost.trim() : host;
     return `${protocol}://${localHost}:${svc.localPort}${svc.localPath}`;
