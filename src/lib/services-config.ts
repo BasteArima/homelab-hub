@@ -44,7 +44,7 @@ export function resolveServiceUrl(svc: Service): string {
     const localHost = svc.localHost && svc.localHost.trim() ? svc.localHost.trim() : host;
     return `${protocol}://${localHost}:${svc.localPort}${svc.localPath}`;
   }
-  return `${svc.protocol === "http" ? "http" : "https"}://${svc.domain}${svc.localPath}`;
+  return `${protocol}://${svc.domain}${svc.localPath}`;
 }
 
 export async function pingService(domain: string, timeoutMs = 5000): Promise<{ online: boolean; rtt: number | null }> {
