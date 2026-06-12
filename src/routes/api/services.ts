@@ -6,17 +6,35 @@ function isValidService(s: unknown): s is Service {
   if (!s || typeof s !== "object") return false;
   const o = s as Record<string, unknown>;
   return (
-    typeof o.id === "string" && o.id.length > 0 && o.id.length < 100 &&
-    typeof o.name === "string" && o.name.length > 0 && o.name.length < 200 &&
-    typeof o.group === "string" && o.group.length > 0 && o.group.length < 100 &&
-    typeof o.icon === "string" && o.icon.length < 100 &&
-    typeof o.localPort === "number" && o.localPort >= 0 && o.localPort <= 65535 &&
-    typeof o.localPath === "string" && o.localPath.length < 500 &&
-    typeof o.domain === "string" && o.domain.length < 500 &&
+    typeof o.id === "string" &&
+    o.id.length > 0 &&
+    o.id.length < 100 &&
+    typeof o.name === "string" &&
+    o.name.length > 0 &&
+    o.name.length < 200 &&
+    typeof o.group === "string" &&
+    o.group.length > 0 &&
+    o.group.length < 100 &&
+    typeof o.icon === "string" &&
+    o.icon.length < 100 &&
+    typeof o.localPort === "number" &&
+    o.localPort >= 0 &&
+    o.localPort <= 65535 &&
+    typeof o.localPath === "string" &&
+    o.localPath.length < 500 &&
+    typeof o.domain === "string" &&
+    o.domain.length < 500 &&
     typeof o.isVps === "boolean" &&
-    (o.description === undefined || (typeof o.description === "string" && o.description.length < 500)) &&
+    (o.description === undefined ||
+      (typeof o.description === "string" && o.description.length < 500)) &&
     (o.protocol === undefined || o.protocol === "http" || o.protocol === "https") &&
-    (o.localHost === undefined || (typeof o.localHost === "string" && o.localHost.length < 253))
+    (o.localProtocol === undefined || o.localProtocol === "http" || o.localProtocol === "https") &&
+    (o.remoteProtocol === undefined ||
+      o.remoteProtocol === "http" ||
+      o.remoteProtocol === "https") &&
+    (o.localHost === undefined || (typeof o.localHost === "string" && o.localHost.length < 253)) &&
+    (o.remotePort === undefined ||
+      (typeof o.remotePort === "number" && o.remotePort >= 0 && o.remotePort <= 65535))
   );
 }
 

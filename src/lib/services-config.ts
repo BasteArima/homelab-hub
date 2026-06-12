@@ -1,3 +1,5 @@
+export type Protocol = "http" | "https";
+
 export type Service = {
   id: string;
   name: string;
@@ -8,11 +10,31 @@ export type Service = {
   domain: string;
   isVps: boolean;
   description?: string;
-  /** "http" or "https" — applied to the resolved URL (both local & remote). Defaults to "http". */
-  protocol?: "http" | "https";
+  /**
+   * @deprecated Legacy single protocol applied to both contexts. Kept only as a
+   * fallback for older configs. New entries use localProtocol / remoteProtocol.
+   */
+  protocol?: Protocol;
+  /** Protocol used for LOCAL access (direct IP:port). Defaults to "http". */
+  localProtocol?: Protocol;
+  /** Protocol used for REMOTE access (via domain / reverse proxy). Defaults to "https". */
+  remoteProtocol?: Protocol;
   /** Optional fixed LAN host/IP for services that run on a different machine than this dashboard. When set, local access uses this host instead of window.location.hostname. */
   localHost?: string;
+  /** Optional port for REMOTE access. Usually empty when a reverse proxy fronts the domain on 80/443. */
+  remotePort?: number;
 };
+
+/** True when the given hostname is on a private/LAN network (or loopback). */
+export function isLocalHost(host: string): boolean {
+  return (
+    host === "localhost" ||
+    host === "127.0.0.1" ||
+    /^192\.168\./.test(host) ||
+    /^10\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+  );
+}
 
 export async function fetchServices(): Promise<Service[]> {
   const res = await fetch("/api/services", { cache: "no-store" });
@@ -30,24 +52,32 @@ export async function saveServices(services: Service[], adminPassword: string): 
   if (!res.ok) throw new Error(`Save failed: ${res.status} ${await res.text()}`);
 }
 
-export function resolveServiceUrl(svc: Service): string {
-  if (typeof window === "undefined") return `https://${svc.domain}${svc.localPath}`;
-  const host = window.location.hostname;
-  const isLocal =
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    /^192\.168\./.test(host) ||
-    /^10\./.test(host) ||
-    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host);
-  const protocol = svc.protocol ?? (isLocal ? "http" : "https");
-  if (isLocal) {
-    const localHost = svc.localHost && svc.localHost.trim() ? svc.localHost.trim() : host;
-    return `${protocol}://${localHost}:${svc.localPort}${svc.localPath}`;
-  }
-  return `${protocol}://${svc.domain}${svc.localPath}`;
+function remoteUrl(svc: Service): string {
+  const protocol = svc.remoteProtocol ?? svc.protocol ?? "https";
+  const path = svc.localPath || "/";
+  const port = svc.remotePort ? `:${svc.remotePort}` : "";
+  return `${protocol}://${svc.domain}${port}${path}`;
 }
 
-export async function pingService(domain: string, timeoutMs = 5000): Promise<{ online: boolean; rtt: number | null }> {
+export function resolveServiceUrl(svc: Service): string {
+  // SSR / non-browser: assume remote access.
+  if (typeof window === "undefined") return remoteUrl(svc);
+
+  const host = window.location.hostname;
+  if (!isLocalHost(host)) return remoteUrl(svc);
+
+  // Local access: go straight to the LAN host:port.
+  const protocol = svc.localProtocol ?? svc.protocol ?? "http";
+  const path = svc.localPath || "/";
+  const localHost = svc.localHost && svc.localHost.trim() ? svc.localHost.trim() : host;
+  const port = svc.localPort ? `:${svc.localPort}` : "";
+  return `${protocol}://${localHost}${port}${path}`;
+}
+
+export async function pingService(
+  domain: string,
+  timeoutMs = 5000,
+): Promise<{ online: boolean; rtt: number | null }> {
   const url = `https://${domain}/favicon.ico?_=${Date.now()}`;
   const start = performance.now();
   const controller = new AbortController();

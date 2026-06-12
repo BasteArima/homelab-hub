@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Search, Globe, Wifi, Settings, Loader2 } from "lucide-react";
-import { fetchServices, type Service } from "@/lib/services-config";
+import { fetchServices, isLocalHost, type Service } from "@/lib/services-config";
 import { ServiceCard } from "@/components/ServiceCard";
 import { AdminPanel } from "@/components/AdminPanel";
 
@@ -55,14 +55,7 @@ function Index() {
     };
   }, []);
 
-  const isLocal = useMemo(
-    () =>
-      host === "localhost" ||
-      host === "127.0.0.1" ||
-      /^192\.168\./.test(host) ||
-      /^10\./.test(host),
-    [host],
-  );
+  const isLocal = useMemo(() => isLocalHost(host), [host]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -84,8 +77,12 @@ function Index() {
     return Array.from(groups.entries());
   }, [filtered]);
 
-  const time = now ? now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "--:--:--";
-  const date = now ? now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" }) : "";
+  const time = now
+    ? now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : "--:--:--";
+  const date = now
+    ? now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
+    : "";
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 sm:px-6 lg:px-8">

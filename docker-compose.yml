@@ -1,23 +1,37 @@
-version: "3.8"
-
+# ─────────────────────────────────────────────────────────────
+# Homelab Hub — Portainer / production stack
+#
+# This pulls the image published by GitHub Actions on every commit
+# (ghcr.io/bastearima/homelab-hub). In Portainer:
+#   1. Stacks → Add stack → paste this file (or point it at the repo).
+#   2. Set ADMIN_PASSWORD under "Environment variables".
+#   3. To update: Pull and redeploy (enable "Re-pull image").
+#
+# Prefer to build locally instead of pulling? Comment out `image:` and
+# uncomment `build: .` below.
+# ─────────────────────────────────────────────────────────────
 services:
   homelab-hub:
-    build: .
+    image: ghcr.io/bastearima/homelab-hub:latest
+    # build: .
     container_name: homelab-hub
     ports:
       - "6232:3001"
     environment:
       - PORT=3001
       - DATA_DIR=/app/data
-      # Override in your environment or .env file. Defaults to "admin123".
+      # Set this in Portainer / your .env. Defaults to "admin123" if unset.
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
     volumes:
-      # Persist services.json across container rebuilds
-      - ./data:/app/data
+      # Persist services.json across container updates.
+      - homelab-data:/app/data
     restart: unless-stopped
     # Optional: limit resources on a small homelab box
     # deploy:
     #   resources:
     #     limits:
-    #       cpus: '0.5'
+    #       cpus: "0.5"
     #       memory: 256M
+
+volumes:
+  homelab-data:

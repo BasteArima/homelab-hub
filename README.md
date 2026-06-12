@@ -6,13 +6,26 @@
 
 ## 🚀 Быстрый старт через Docker
 
+При каждом коммите GitHub Actions собирает образ и публикует его в **GitHub Container Registry** — `ghcr.io/bastearima/homelab-hub:latest`. Поднять можно двумя способами.
+
+### Вариант A — Portainer (рекомендуется)
+
+1. **Stacks → Add stack** → вставьте содержимое `docker-compose.yml` (или укажите репозиторий).
+2. В **Environment variables** задайте `ADMIN_PASSWORD`.
+3. **Deploy the stack**.
+4. Обновление: на странице стека нажмите **Pull and redeploy** (включите *Re-pull image*) — Portainer вытянет свежий образ из ghcr.
+
+### Вариант B — docker compose на сервере
+
 ```bash
-# 1. Клонировать / скопировать проект на сервер
-# 2. (опционально) задать пароль админа
+# (опционально) задать пароль админа
 export ADMIN_PASSWORD="my-strong-password"
-# 3. Поднять контейнер
-docker compose up -d --build
+
+# Вытянуть свежий образ из ghcr и поднять
+docker compose pull && docker compose up -d
 ```
+
+> Хотите собирать локально, а не тянуть из ghcr? В `docker-compose.yml` закомментируйте строку `image:` и раскомментируйте `build: .`, затем `docker compose up -d --build`.
 
 Приложение будет доступно на порту **`6232`** (снаружи) → `3001` (внутри контейнера).
 
@@ -20,7 +33,7 @@ docker compose up -d --build
 http://<IP-вашего-сервера>:6232
 ```
 
-Конфигурация сервисов хранится в **`./data/services.json`** на хосте (volume-mount). Файл переживает пересборку и обновление контейнера.
+Конфигурация сервисов хранится в именованном volume **`homelab-data`** (`/app/data/services.json` внутри контейнера). При первом запуске volume автоматически наполняется сидом из образа, а ваши правки переживают обновление и redeploy.
 
 ---
 
@@ -41,17 +54,26 @@ http://<IP-вашего-сервера>:6232
 | `name` | Отображаемое имя |
 | `group` | Категория для группировки (System / Media / Apps / VPS / …) |
 | `icon` | Имя иконки из [lucide.dev](https://lucide.dev/icons/) |
-| `localPort` | Порт при локальном доступе |
-| `localPath` | Путь (обычно `/`) |
-| `domain` | Внешний домен (используется при удалённом доступе и для пинга VPS) |
+| **Local** `localProtocol` | Протокол при локальном доступе. По умолчанию `http` |
+| **Local** `localHost` | LAN-хост / IP сервиса. Пусто = хост самого dashboard |
+| **Local** `localPort` | Порт при локальном доступе |
+| **Remote** `remoteProtocol` | Протокол при удалённом доступе. По умолчанию `https` |
+| **Remote** `domain` | Внешний домен (удалённый доступ + пинг VPS) |
+| **Remote** `remotePort` | Порт при удалённом доступе. Обычно пусто (за reverse proxy на 80/443) |
+| `localPath` | Путь (обычно `/`), добавляется к обоим адресам |
 | `isVps` | Включает индикатор Online/Offline с пингом |
 | `description` | Подпись под названием |
 
-### Сервис только с внешним доступом (без локального)
-Укажите `domain` своего публичного хоста, `isVps: true` для пинга, а `localPort` оставьте `443` — при локальном открытии ссылка пойдёт на `https://domain` если ваш роутер поддерживает NAT hairpin, либо отредактируйте функцию `resolveServiceUrl` в `src/lib/services-config.ts`.
+Локальный и удалённый доступ теперь настраиваются **независимо**: dashboard сам выбирает набор полей в зависимости от того, откуда вы зашли (LAN → блок **Local**, снаружи → блок **Remote**). Это убирает путаницу с http/https и портами.
+
+### Сервис на отдельной машине в LAN (роутер, Proxmox, …)
+Заполните блок **Local**: `localHost` = IP устройства (например `192.168.0.1`) и `localPort`. Если `localHost` пуст, локальная ссылка ведёт на хост самого dashboard.
+
+### Сервис только с внешним доступом
+Заполните блок **Remote** (`domain`), `isVps: true` для пинга. Блок **Local** можно не заполнять.
 
 ### Сервис с локальным **и** внешним доступом
-Заполните оба поля: `localPort` + `domain`. Dashboard сам выберет правильный URL в зависимости от того, откуда вы зашли (см. таблицу ниже).
+Заполните оба блока. Dashboard сам выберет правильный URL в зависимости от того, откуда вы зашли (см. таблицу ниже).
 
 ---
 
@@ -76,7 +98,8 @@ curl -X POST http://<host>:6232/api/services \
 
 | Файл / папка | Назначение |
 |-------------|------------|
-| `data/services.json` | **Хранилище списка сервисов** (volume-mount, переживает пересборку) |
+| `data/services.json` | **Сид списка сервисов** (запекается в образ; рантайм-данные живут в volume `homelab-data`) |
+| `.github/workflows/docker-image.yml` | CI: сборка и публикация образа в ghcr при каждом коммите |
 | `src/routes/api/services.ts` | API endpoint: GET / POST для управления списком |
 | `src/lib/services-config.ts` | Типы + клиентские helpers (`fetchServices`, `saveServices`) |
 | `src/lib/services-data.server.ts` | Серверная логика чтения/записи JSON |
@@ -212,8 +235,8 @@ export function resolveServiceUrl(svc: Service): string {
 ## 🐳 Docker-команды
 
 ```bash
-# Поднять
-docker compose up -d --build
+# Поднять (тянет образ из ghcr)
+docker compose pull && docker compose up -d
 
 # Посмотреть логи
 docker compose logs -f
@@ -224,7 +247,10 @@ docker compose restart
 # Остановить
 docker compose down
 
-# Обновить после изменения кода
+# Обновить после нового коммита (CI уже собрал свежий образ)
+docker compose pull && docker compose up -d
+
+# Локальная сборка вместо ghcr (если в compose включён build: .)
 docker compose up -d --build
 ```
 
