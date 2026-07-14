@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
-import { ExternalLink, Pencil, X } from "lucide-react";
+import { ExternalLink, Pencil, X, ChevronUp, ChevronDown } from "lucide-react";
 import { pingService, resolveServiceUrl, type Service } from "@/lib/services-config";
 import { resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
 import { resolveIcon } from "@/lib/logos";
@@ -15,6 +15,9 @@ type Props = {
   editing?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
+  /** Touch/keyboard reorder within the group; omitted at the group's edges. */
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   isDragging?: boolean;
   showDropIndicator?: boolean;
   onDragStart?: (e: React.DragEvent) => void;
@@ -30,6 +33,8 @@ export function ServiceCard({
   editing = false,
   onEdit,
   onDelete,
+  onMoveUp,
+  onMoveDown,
   isDragging = false,
   showDropIndicator = false,
   onDragStart,
@@ -177,6 +182,34 @@ export function ServiceCard({
         >
           <X className="h-3.5 w-3.5" />
         </button>
+        {(onMoveUp || onMoveDown) && (
+          <div className="absolute -bottom-2 left-1/2 z-10 flex -translate-x-1/2 overflow-hidden rounded-full border border-white/15 bg-[oklch(0.2_0.025_265)] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveUp?.();
+              }}
+              disabled={!onMoveUp}
+              title="Move up"
+              aria-label="Move up"
+              className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              <ChevronUp className="h-4 w-4" />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onMoveDown?.();
+              }}
+              disabled={!onMoveDown}
+              title="Move down"
+              aria-label="Move down"
+              className="flex h-7 w-7 items-center justify-center border-l border-white/10 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              <ChevronDown className="h-4 w-4" />
+            </button>
+          </div>
+        )}
         {verticalInner}
       </div>
     );

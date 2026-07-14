@@ -416,6 +416,26 @@ function Index() {
     setDropTarget(null);
   };
 
+  // Touch/keyboard reorder within a group (swaps with the same-group neighbour).
+  const moveWithinGroup = (uid: string, dir: -1 | 1) => {
+    const item = draft.find((i) => i.uid === uid);
+    if (!item) return;
+    const g = item.svc.group || "Ungrouped";
+    const siblings = draft.filter((i) => (i.svc.group || "Ungrouped") === g);
+    const idx = siblings.findIndex((i) => i.uid === uid);
+    const target = idx + dir;
+    if (target < 0 || target >= siblings.length) return;
+    const otherUid = siblings[target].uid;
+    setDraft((cur) => {
+      const a = cur.findIndex((i) => i.uid === uid);
+      const b = cur.findIndex((i) => i.uid === otherUid);
+      if (a < 0 || b < 0) return cur;
+      const next = [...cur];
+      [next[a], next[b]] = [next[b], next[a]];
+      return next;
+    });
+  };
+
   const closeEditor = () => {
     const uid = editorUid;
     if (uid && newUids.has(uid)) {
@@ -749,6 +769,10 @@ function Index() {
                       editing
                       onEdit={() => setEditorUid(it.uid)}
                       onDelete={() => removeDraft(it.uid)}
+                      onMoveUp={i > 0 ? () => moveWithinGroup(it.uid, -1) : undefined}
+                      onMoveDown={
+                        i < group.items.length - 1 ? () => moveWithinGroup(it.uid, 1) : undefined
+                      }
                       isDragging={dragUid === it.uid}
                       showDropIndicator={
                         dragUid !== null &&
