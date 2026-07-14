@@ -2,13 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Trash2, Copy, Check, Wifi, Globe, ChevronDown, Plus } from "lucide-react";
 import type { Protocol, Service } from "@/lib/services-config";
 import { previewUrls } from "@/lib/services-config";
-import { SERVICE_COLORS, resolveServiceColor } from "@/lib/service-colors";
+import { SERVICE_COLORS, resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
 import { IconPicker } from "@/components/IconPicker";
 
 type Props = {
   service: Service;
   isNew: boolean;
   existingGroups: string[];
+  /** Exact group-aware color used when this service is on "Auto". Falls back to standalone resolution. */
+  autoColor?: ResolvedColor | null;
   onChange: (svc: Service) => void;
   onDuplicate: () => void;
   onDelete: () => void;
@@ -19,6 +21,7 @@ export function ServiceEditorModal({
   service,
   isNew,
   existingGroups,
+  autoColor,
   onChange,
   onDuplicate,
   onDelete,
@@ -70,7 +73,7 @@ export function ServiceEditorModal({
               onChange={(v) => set("description", v)}
               className="col-span-2"
             />
-            <ColorField service={service} onChange={(c) => set("color", c)} />
+            <ColorField service={service} autoColor={autoColor} onChange={(c) => set("color", c)} />
           </div>
 
           {/* Local access */}
@@ -199,12 +202,15 @@ function ProtoSelect({ value, onChange }: { value: Protocol; onChange: (v: Proto
 
 function ColorField({
   service,
+  autoColor,
   onChange,
 }: {
   service: Service;
+  autoColor?: ResolvedColor | null;
   onChange: (color: string | undefined) => void;
 }) {
-  const auto = resolveServiceColor({ id: service.id, name: service.name, color: undefined });
+  const auto =
+    autoColor ?? resolveServiceColor({ id: service.id, name: service.name, color: undefined });
   const isAuto = !service.color || !SERVICE_COLORS.some((c) => c.key === service.color);
   return (
     <div className="col-span-2 flex flex-col gap-1">

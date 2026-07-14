@@ -387,6 +387,19 @@ function Index() {
 
   const editorItem = editorUid ? draft.find((i) => i.uid === editorUid) : null;
 
+  // The exact group-aware color this service would get on "Auto" (color unset),
+  // so the editor's Auto swatch matches what actually renders.
+  let editorAutoColor = null;
+  if (editorItem) {
+    const g = editorItem.svc.group || "Ungrouped";
+    const groupItems = draft.filter((d) => (d.svc.group || "Ungrouped") === g);
+    const inputs = groupItems.map((d) =>
+      d.uid === editorItem.uid ? { ...d.svc, color: undefined } : d.svc,
+    );
+    const idx = groupItems.findIndex((d) => d.uid === editorItem.uid);
+    editorAutoColor = assignGroupColors(inputs)[idx] ?? null;
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Sticky edit toolbar */}
@@ -693,6 +706,7 @@ function Index() {
           service={editorItem.svc}
           isNew={newUids.has(editorItem.uid)}
           existingGroups={groupNames}
+          autoColor={editorAutoColor}
           onChange={(svc) => updateDraft(editorItem.uid, svc)}
           onDuplicate={() => duplicateDraft(editorItem.uid)}
           onDelete={() => removeDraft(editorItem.uid)}
