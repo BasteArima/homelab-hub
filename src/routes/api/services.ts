@@ -34,7 +34,8 @@ function isValidService(s: unknown): s is Service {
       o.remoteProtocol === "https") &&
     (o.localHost === undefined || (typeof o.localHost === "string" && o.localHost.length < 253)) &&
     (o.remotePort === undefined ||
-      (typeof o.remotePort === "number" && o.remotePort >= 0 && o.remotePort <= 65535))
+      (typeof o.remotePort === "number" && o.remotePort >= 0 && o.remotePort <= 65535)) &&
+    (o.color === undefined || (typeof o.color === "string" && o.color.length < 32))
   );
 }
 

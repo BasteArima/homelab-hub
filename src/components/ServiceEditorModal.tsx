@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Trash2, Copy, Check, Wifi, Globe, ChevronDown, Plus } from "lucide-react";
 import type { Protocol, Service } from "@/lib/services-config";
 import { previewUrls } from "@/lib/services-config";
+import { SERVICE_COLORS, resolveServiceColor } from "@/lib/service-colors";
 import { IconPicker } from "@/components/IconPicker";
 
 type Props = {
@@ -69,6 +70,7 @@ export function ServiceEditorModal({
               onChange={(v) => set("description", v)}
               className="col-span-2"
             />
+            <ColorField service={service} onChange={(c) => set("color", c)} />
           </div>
 
           {/* Local access */}
@@ -192,6 +194,53 @@ function ProtoSelect({ value, onChange }: { value: Protocol; onChange: (v: Proto
         <option value="https">https</option>
       </select>
     </label>
+  );
+}
+
+function ColorField({
+  service,
+  onChange,
+}: {
+  service: Service;
+  onChange: (color: string | undefined) => void;
+}) {
+  const auto = resolveServiceColor({ id: service.id, name: service.name, color: undefined });
+  const isAuto = !service.color || !SERVICE_COLORS.some((c) => c.key === service.color);
+  return (
+    <div className="col-span-2 flex flex-col gap-1">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Color</span>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => onChange(undefined)}
+          title="Auto (from id)"
+          className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] ${
+            isAuto
+              ? "border-primary/60 text-foreground"
+              : "border-white/10 text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <span className="h-3 w-3 rounded-full" style={{ background: auto.fg }} />
+          Auto
+        </button>
+        {SERVICE_COLORS.map((c) => {
+          const selected = service.color === c.key;
+          return (
+            <button
+              key={c.key}
+              type="button"
+              onClick={() => onChange(c.key)}
+              title={c.label}
+              aria-label={c.label}
+              className={`flex h-6 w-6 items-center justify-center rounded-full ring-offset-1 ring-offset-transparent transition-transform hover:scale-110 ${
+                selected ? "ring-2 ring-white" : ""
+              }`}
+              style={{ background: c.fg }}
+            />
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

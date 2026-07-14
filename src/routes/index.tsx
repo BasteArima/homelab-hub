@@ -22,6 +22,7 @@ import {
   verifyPassword,
   type Service,
 } from "@/lib/services-config";
+import { assignGroupColors } from "@/lib/service-colors";
 import { ServiceCard } from "@/components/ServiceCard";
 import { ServiceEditorModal } from "@/components/ServiceEditorModal";
 
@@ -504,22 +505,25 @@ function Index() {
               Failed to load services: {loadError}
             </div>
           )}
-          {displayGrouped.entries.map(([group, items]) => (
-            <section key={group}>
-              <div className="mb-4 flex items-center gap-3">
-                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                  {group}
-                </h2>
-                <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-                <span className="text-[10px] text-muted-foreground/60">{items.length}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-                {items.map((s) => (
-                  <ServiceCard key={s.id} service={s} />
-                ))}
-              </div>
-            </section>
-          ))}
+          {displayGrouped.entries.map(([group, items]) => {
+            const colors = assignGroupColors(items);
+            return (
+              <section key={group}>
+                <div className="mb-4 flex items-center gap-3">
+                  <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    {group}
+                  </h2>
+                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                  <span className="text-[10px] text-muted-foreground/60">{items.length}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+                  {items.map((s, i) => (
+                    <ServiceCard key={s.id} service={s} color={colors[i]} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
           {!loading && !loadError && displayGrouped.entries.length === 0 && (
             <div className="py-20 text-center text-sm text-muted-foreground">
               {services.length === 0
@@ -533,100 +537,104 @@ function Index() {
       {/* ── Edit mode ────────────────────────────────────────────── */}
       {editMode && (
         <div className="space-y-10 pb-16">
-          {editGroups.map((group) => (
-            <section
-              key={group.name}
-              onDragOver={(e) => {
-                if (dragUid === null) return;
-                e.preventDefault();
-                e.dataTransfer.dropEffect = "move";
-                setDropTarget((cur) =>
-                  cur && cur.group === group.name && cur.beforeUid === null
-                    ? cur
-                    : { group: group.name, beforeUid: null },
-                );
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                if (dragUid !== null && dropTarget)
-                  moveDraft(dragUid, dropTarget.group, dropTarget.beforeUid);
-                finishDrag();
-              }}
-              className={`rounded-2xl border p-3 transition-colors ${
-                dragUid !== null && dropTarget?.group === group.name
-                  ? "border-primary/40 bg-primary/[0.03]"
-                  : "border-transparent"
-              }`}
-            >
-              <div className="mb-4 flex items-center gap-3">
-                <input
-                  value={group.name}
-                  onChange={(e) => renameGroup(group.name, e.target.value)}
-                  className="min-w-0 rounded-md bg-transparent px-1 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none focus:bg-black/30 focus:text-foreground"
-                  title="Rename group"
-                />
-                <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-                <span className="text-[10px] text-muted-foreground/60">{group.items.length}</span>
-                {group.items.length === 0 && (
-                  <button
-                    onClick={() => removeEmptyGroup(group.name)}
-                    className="rounded-md p-1 text-rose-400/70 hover:bg-rose-500/10 hover:text-rose-400"
-                    title="Remove empty group"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-                {group.items.map((it) => (
-                  <ServiceCard
-                    key={it.uid}
-                    service={it.svc}
-                    editing
-                    onEdit={() => setEditorUid(it.uid)}
-                    onDelete={() => removeDraft(it.uid)}
-                    isDragging={dragUid === it.uid}
-                    showDropIndicator={
-                      dragUid !== null &&
-                      dropTarget?.group === group.name &&
-                      dropTarget.beforeUid === it.uid
-                    }
-                    onDragStart={(e) => {
-                      setDragUid(it.uid);
-                      e.dataTransfer.effectAllowed = "move";
-                    }}
-                    onDragOver={(e) => {
-                      if (dragUid === null) return;
-                      e.preventDefault();
-                      e.stopPropagation();
-                      e.dataTransfer.dropEffect = "move";
-                      setDropTarget((cur) =>
-                        cur && cur.group === group.name && cur.beforeUid === it.uid
-                          ? cur
-                          : { group: group.name, beforeUid: it.uid },
-                      );
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      if (dragUid !== null) moveDraft(dragUid, group.name, it.uid);
-                      finishDrag();
-                    }}
-                    onDragEnd={finishDrag}
+          {editGroups.map((group) => {
+            const colors = assignGroupColors(group.items.map((it) => it.svc));
+            return (
+              <section
+                key={group.name}
+                onDragOver={(e) => {
+                  if (dragUid === null) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "move";
+                  setDropTarget((cur) =>
+                    cur && cur.group === group.name && cur.beforeUid === null
+                      ? cur
+                      : { group: group.name, beforeUid: null },
+                  );
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  if (dragUid !== null && dropTarget)
+                    moveDraft(dragUid, dropTarget.group, dropTarget.beforeUid);
+                  finishDrag();
+                }}
+                className={`rounded-2xl border p-3 transition-colors ${
+                  dragUid !== null && dropTarget?.group === group.name
+                    ? "border-primary/40 bg-primary/[0.03]"
+                    : "border-transparent"
+                }`}
+              >
+                <div className="mb-4 flex items-center gap-3">
+                  <input
+                    value={group.name}
+                    onChange={(e) => renameGroup(group.name, e.target.value)}
+                    className="min-w-0 rounded-md bg-transparent px-1 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none focus:bg-black/30 focus:text-foreground"
+                    title="Rename group"
                   />
-                ))}
-                {/* Add-service tile */}
-                <button
-                  onClick={() => addToGroup(group.name)}
-                  className="flex min-h-[8.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
-                  title="Add service to this group"
-                >
-                  <Plus className="h-7 w-7" />
-                  <span className="text-xs">Add</span>
-                </button>
-              </div>
-            </section>
-          ))}
+                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                  <span className="text-[10px] text-muted-foreground/60">{group.items.length}</span>
+                  {group.items.length === 0 && (
+                    <button
+                      onClick={() => removeEmptyGroup(group.name)}
+                      className="rounded-md p-1 text-rose-400/70 hover:bg-rose-500/10 hover:text-rose-400"
+                      title="Remove empty group"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+                  {group.items.map((it, i) => (
+                    <ServiceCard
+                      key={it.uid}
+                      service={it.svc}
+                      color={colors[i]}
+                      editing
+                      onEdit={() => setEditorUid(it.uid)}
+                      onDelete={() => removeDraft(it.uid)}
+                      isDragging={dragUid === it.uid}
+                      showDropIndicator={
+                        dragUid !== null &&
+                        dropTarget?.group === group.name &&
+                        dropTarget.beforeUid === it.uid
+                      }
+                      onDragStart={(e) => {
+                        setDragUid(it.uid);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => {
+                        if (dragUid === null) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        e.dataTransfer.dropEffect = "move";
+                        setDropTarget((cur) =>
+                          cur && cur.group === group.name && cur.beforeUid === it.uid
+                            ? cur
+                            : { group: group.name, beforeUid: it.uid },
+                        );
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (dragUid !== null) moveDraft(dragUid, group.name, it.uid);
+                        finishDrag();
+                      }}
+                      onDragEnd={finishDrag}
+                    />
+                  ))}
+                  {/* Add-service tile */}
+                  <button
+                    onClick={() => addToGroup(group.name)}
+                    className="flex min-h-[8.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                    title="Add service to this group"
+                  >
+                    <Plus className="h-7 w-7" />
+                    <span className="text-xs">Add</span>
+                  </button>
+                </div>
+              </section>
+            );
+          })}
 
           <button
             onClick={addGroup}

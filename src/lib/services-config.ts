@@ -23,6 +23,8 @@ export type Service = {
   localHost?: string;
   /** Optional port for REMOTE access. Usually empty when a reverse proxy fronts the domain on 80/443. */
   remotePort?: number;
+  /** Optional icon-tile color (palette key from service-colors). When unset, a stable color is auto-picked from the id. */
+  color?: string;
 };
 
 /** True when the given hostname is on a private/LAN network (or loopback). */
