@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as Icons from "lucide-react";
-import { Search, X } from "lucide-react";
+import { Search, X, Sparkles } from "lucide-react";
+import { LOGO_SLUGS, canonicalSlug, logoUrl } from "@/lib/logos";
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
@@ -10,28 +11,29 @@ const ICON_NAMES = Object.keys(Icons)
   .filter((k) => /^[A-Z][A-Za-z0-9]*$/.test(k) && !k.endsWith("Icon") && !k.startsWith("Lucide"))
   .sort();
 
-function iconOf(name: string): IconComponent {
+function lucideOf(name: string): IconComponent {
   return (Icons[name as keyof typeof Icons] as IconComponent) ?? Icons.Box;
 }
 
-const MAX_RESULTS = 120;
+const MAX_LUCIDE = 90;
+const MAX_LOGOS = 48;
 
-export function IconPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (name: string) => void;
-}) {
+type Props = { value: string; onChange: (v: string) => void; autoSlug?: string | null };
+
+export function IconPicker({ value, onChange, autoSlug }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
+  const q = query.trim().toLowerCase();
+  const logos = useMemo(
+    () => (q ? LOGO_SLUGS.filter((s) => s.includes(q)).slice(0, MAX_LOGOS) : []),
+    [q],
+  );
+  const lucides = useMemo(() => {
     const list = q ? ICON_NAMES.filter((n) => n.toLowerCase().includes(q)) : ICON_NAMES;
-    return list.slice(0, MAX_RESULTS);
-  }, [query]);
+    return list.slice(0, MAX_LUCIDE);
+  }, [q]);
 
   useEffect(() => {
     if (!open) return;
@@ -47,18 +49,21 @@ export function IconPicker({
     };
   }, [open]);
 
-  const Current = iconOf(value);
+  const pick = (v: string) => {
+    onChange(v);
+    setOpen(false);
+  };
 
   return (
     <div ref={rootRef} className="relative">
       <span className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
         Icon
         <a
-          href="https://lucide.dev/icons/"
+          href="https://dashboardicons.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary/70 hover:text-primary"
-          title="Browse all icons"
+          title="Browse brand logos"
         >
           ↗
         </a>
@@ -69,9 +74,9 @@ export function IconPicker({
         className="flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-left text-xs text-foreground outline-none hover:border-primary/40 focus:border-primary/60"
       >
         <span className="flex h-6 w-6 items-center justify-center rounded bg-white/5">
-          <Current className="h-4 w-4 text-primary" />
+          <TriggerIcon value={value} autoSlug={autoSlug} />
         </span>
-        <span className="truncate">{value || "Pick an icon"}</span>
+        <span className="truncate">{labelFor(value, autoSlug)}</span>
       </button>
 
       {open && (
@@ -82,7 +87,7 @@ export function IconPicker({
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search icons…"
+              placeholder="Search logos & icons…"
               className="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
             />
             {query && (
@@ -94,40 +99,103 @@ export function IconPicker({
               </button>
             )}
           </div>
-          <div className="grid max-h-56 grid-cols-6 gap-1 overflow-y-auto">
-            {results.map((name) => {
-              const Cmp = iconOf(name);
-              const active = name === value;
-              return (
-                <button
-                  key={name}
-                  type="button"
-                  title={name}
-                  onClick={() => {
-                    onChange(name);
-                    setOpen(false);
-                  }}
-                  className={`flex h-9 items-center justify-center rounded-lg border transition-colors ${
-                    active
-                      ? "border-primary/60 bg-primary/10 text-primary"
-                      : "border-transparent text-foreground hover:border-white/10 hover:bg-white/5"
-                  }`}
-                >
-                  <Cmp className="h-4 w-4" />
-                </button>
-              );
-            })}
-            {results.length === 0 && (
-              <p className="col-span-6 py-4 text-center text-[11px] text-muted-foreground">
-                No icons match “{query}”
-              </p>
+
+          <button
+            type="button"
+            onClick={() => pick("")}
+            className={`mb-2 flex w-full items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[11px] ${
+              value === ""
+                ? "border-primary/60 text-foreground"
+                : "border-white/10 text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
+            Auto {autoSlug ? `(logo: ${autoSlug})` : "(icon from name)"}
+          </button>
+
+          <div className="max-h-60 overflow-y-auto">
+            {logos.length > 0 && (
+              <>
+                <p className="px-1 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+                  Logos
+                </p>
+                <div className="mb-2 grid grid-cols-6 gap-1">
+                  {logos.map((slug) => {
+                    const active = value === `logo:${slug}`;
+                    return (
+                      <button
+                        key={slug}
+                        type="button"
+                        title={slug}
+                        onClick={() => pick(`logo:${slug}`)}
+                        className={`flex h-9 items-center justify-center rounded-lg border transition-colors ${
+                          active
+                            ? "border-primary/60 bg-primary/10"
+                            : "border-transparent hover:border-white/10 hover:bg-white/5"
+                        }`}
+                      >
+                        <img src={logoUrl(slug)} alt="" className="h-5 w-5 object-contain" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
             )}
+
+            <p className="px-1 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
+              Icons
+            </p>
+            <div className="grid grid-cols-6 gap-1">
+              {lucides.map((name) => {
+                const Cmp = lucideOf(name);
+                const active = value === `lucide:${name}` || value === name;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    title={name}
+                    onClick={() => pick(`lucide:${name}`)}
+                    className={`flex h-9 items-center justify-center rounded-lg border transition-colors ${
+                      active
+                        ? "border-primary/60 bg-primary/10 text-primary"
+                        : "border-transparent text-foreground hover:border-white/10 hover:bg-white/5"
+                    }`}
+                  >
+                    <Cmp className="h-4 w-4" />
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <p className="mt-1 px-1 text-[10px] text-muted-foreground/60">
-            {query ? `${results.length} shown` : `${ICON_NAMES.length} icons — type to search`}
+            {q
+              ? `${logos.length} logos · ${lucides.length} icons`
+              : "Type a name to find brand logos"}
           </p>
         </div>
       )}
     </div>
   );
+}
+
+function TriggerIcon({ value, autoSlug }: { value: string; autoSlug?: string | null }) {
+  if (value.startsWith("logo:")) {
+    const slug = canonicalSlug(value.slice(5)) ?? value.slice(5);
+    return <img src={logoUrl(slug)} alt="" className="h-4 w-4 object-contain" />;
+  }
+  if (/^https?:\/\//i.test(value))
+    return <img src={value} alt="" className="h-4 w-4 object-contain" />;
+  if (value === "" && autoSlug)
+    return <img src={logoUrl(autoSlug)} alt="" className="h-4 w-4 object-contain" />;
+  const name = value.startsWith("lucide:") ? value.slice(7) : value || "Box";
+  const Cmp = lucideOf(name);
+  return <Cmp className="h-4 w-4 text-primary" />;
+}
+
+function labelFor(value: string, autoSlug?: string | null): string {
+  if (value.startsWith("logo:")) return value.slice(5);
+  if (value.startsWith("lucide:")) return value.slice(7);
+  if (/^https?:\/\//i.test(value)) return "custom URL";
+  if (value === "") return autoSlug ? `Auto · ${autoSlug}` : "Auto";
+  return value;
 }

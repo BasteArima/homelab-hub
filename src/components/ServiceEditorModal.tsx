@@ -3,6 +3,7 @@ import { X, Trash2, Copy, Check, Wifi, Globe, ChevronDown, Plus } from "lucide-r
 import type { Protocol, Service } from "@/lib/services-config";
 import { previewUrls } from "@/lib/services-config";
 import { SERVICE_COLORS, resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
+import { autoLogoSlug } from "@/lib/logos";
 import { IconPicker } from "@/components/IconPicker";
 
 type Props = {
@@ -61,7 +62,11 @@ export function ServiceEditorModal({
           <div className="grid grid-cols-2 gap-3">
             <Field label="Name" value={service.name} onChange={(v) => set("name", v)} />
             <Field label="ID" value={service.id} onChange={(v) => set("id", v)} hint="unique" />
-            <IconPicker value={service.icon} onChange={(v) => set("icon", v)} />
+            <IconPicker
+              value={service.icon}
+              autoSlug={autoLogoSlug(service)}
+              onChange={(v) => set("icon", v)}
+            />
             <GroupField
               value={service.group}
               existing={existingGroups}

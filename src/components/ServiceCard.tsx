@@ -3,6 +3,7 @@ import * as Icons from "lucide-react";
 import { ExternalLink, Pencil, X } from "lucide-react";
 import { pingService, resolveServiceUrl, type Service } from "@/lib/services-config";
 import { resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
+import { resolveIcon } from "@/lib/logos";
 
 type Props = {
   service: Service;
@@ -34,6 +35,9 @@ export function ServiceCard({
 }: Props) {
   const [status, setStatus] = useState<{ online: boolean; rtt: number | null } | null>(null);
   const [loading, setLoading] = useState(service.isVps);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => setImgError(false), [service.icon]);
 
   useEffect(() => {
     if (!service.isVps || editing) return;
@@ -54,8 +58,11 @@ export function ServiceCard({
     };
   }, [service.domain, service.isVps, editing]);
 
-  const Icon =
-    (Icons[service.icon as keyof typeof Icons] as React.ComponentType<{
+  const iconR = resolveIcon(service);
+  const showLogo = (iconR.kind === "logo" || iconR.kind === "url") && !imgError;
+  const lucideName = iconR.kind === "lucide" ? iconR.name : "Box";
+  const LucideIcon =
+    (Icons[lucideName as keyof typeof Icons] as React.ComponentType<{
       className?: string;
       style?: React.CSSProperties;
     }>) ?? Icons.Box;
@@ -65,12 +72,23 @@ export function ServiceCard({
   const inner = (
     <>
       <div className="flex items-start justify-between">
-        <div
-          className="flex h-11 w-11 items-center justify-center rounded-xl"
-          style={{ background: color.bg, boxShadow: `inset 0 0 0 1px ${color.ring}` }}
-        >
-          <Icon className="h-5 w-5" style={{ color: color.fg }} />
-        </div>
+        {showLogo ? (
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10">
+            <img
+              src={iconR.src}
+              alt=""
+              className="h-6 w-6 object-contain"
+              onError={() => setImgError(true)}
+            />
+          </div>
+        ) : (
+          <div
+            className="flex h-11 w-11 items-center justify-center rounded-xl"
+            style={{ background: color.bg, boxShadow: `inset 0 0 0 1px ${color.ring}` }}
+          >
+            <LucideIcon className="h-5 w-5" style={{ color: color.fg }} />
+          </div>
+        )}
         {editing ? (
           <Pencil className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
         ) : (

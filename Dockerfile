@@ -10,8 +10,12 @@ WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
-# Copy source code and build
+# Copy source code
 COPY . .
+
+# Fetch brand logos into public/logos (gitignored; needs network at build)
+RUN bun scripts/fetch-logos.mjs
+
 RUN bun run build
 
 # 2) Production stage: lightweight Node.js image to serve

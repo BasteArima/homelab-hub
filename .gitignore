@@ -30,3 +30,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Brand logos: fetched at build (scripts/fetch-logos.mjs); manifest is committed
+public/logos/
