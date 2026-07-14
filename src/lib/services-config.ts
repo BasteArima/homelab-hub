@@ -59,6 +59,16 @@ function remoteUrl(svc: Service): string {
   return `${protocol}://${svc.domain}${port}${path}`;
 }
 
+/** Verifies the admin password server-side without writing anything. */
+export async function verifyPassword(adminPassword: string): Promise<boolean> {
+  const res = await fetch("/api/services", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ adminPassword, verify: true }),
+  });
+  return res.ok;
+}
+
 export function resolveServiceUrl(svc: Service): string {
   // SSR / non-browser: assume remote access.
   if (typeof window === "undefined") return remoteUrl(svc);
@@ -72,6 +82,23 @@ export function resolveServiceUrl(svc: Service): string {
   const localHost = svc.localHost && svc.localHost.trim() ? svc.localHost.trim() : host;
   const port = svc.localPort ? `:${svc.localPort}` : "";
   return `${protocol}://${localHost}${port}${path}`;
+}
+
+/**
+ * Both resolved URLs for editor previews. Uses placeholders where a value is
+ * blank so the user can see the shape before filling everything in.
+ */
+export function previewUrls(svc: Service): { local: string; remote: string } {
+  const path = svc.localPath || "/";
+  const lProto = svc.localProtocol ?? svc.protocol ?? "http";
+  const lHost = svc.localHost && svc.localHost.trim() ? svc.localHost.trim() : "<this-host>";
+  const lPort = svc.localPort ? `:${svc.localPort}` : "";
+  const rProto = svc.remoteProtocol ?? svc.protocol ?? "https";
+  const rPort = svc.remotePort ? `:${svc.remotePort}` : "";
+  return {
+    local: `${lProto}://${lHost}${lPort}${path}`,
+    remote: `${rProto}://${svc.domain || "<domain>"}${rPort}${path}`,
+  };
 }
 
 export async function pingService(

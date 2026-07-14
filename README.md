@@ -39,12 +39,18 @@ http://<IP-вашего-сервера>:6232
 
 ## 🛠 Управление сервисами через UI
 
-1. Откройте dashboard в браузере.
-2. Нажмите иконку шестерёнки ⚙️ в правом верхнем углу.
-3. Введите пароль (`ADMIN_PASSWORD` из переменной окружения, по умолчанию — `admin123`).
-4. Добавляйте / редактируйте / удаляйте сервисы в форме и нажмите **Save**.
+Редактирование происходит **прямо на странице** (режим редактирования), а не в отдельной админ-форме:
 
-Все изменения немедленно сохраняются в `data/services.json` и применяются без перезапуска контейнера.
+1. Нажмите **✎ Edit** в правом верхнем углу и введите пароль (`ADMIN_PASSWORD`, по умолчанию — `admin123`).
+2. Откроется режим редактирования с липкой панелью сверху (**Import / Export / Cancel / Save**).
+3. **Клик по карточке** открывает компактную модалку редактирования этого сервиса — с живым предпросмотром итоговых локального и внешнего URL и **пикером иконок с поиском**.
+4. **Плитка `+`** в конце каждой категории добавляет сервис сразу в эту группу.
+5. **Крестик** в углу карточки удаляет её (снизу всплывает тост с кнопкой **Undo**).
+6. **Перетаскивание** карточек меняет порядок внутри группы и переносит между группами (десктоп).
+7. Заголовки групп редактируются на месте; **New group** создаёт новую категорию.
+8. **Save** пишет всё в `data/services.json`; **Cancel** откатывает черновик (спросит подтверждение, если есть несохранённые правки).
+
+Пароль проверяется на сервере при входе в режим и при сохранении. Изменения применяются без перезапуска контейнера.
 
 ### Поля сервиса
 
@@ -100,12 +106,13 @@ curl -X POST http://<host>:6232/api/services \
 |-------------|------------|
 | `data/services.json` | **Сид списка сервисов** (запекается в образ; рантайм-данные живут в volume `homelab-data`) |
 | `.github/workflows/docker-image.yml` | CI: сборка и публикация образа в ghcr при каждом коммите |
-| `src/routes/api/services.ts` | API endpoint: GET / POST для управления списком |
-| `src/lib/services-config.ts` | Типы + клиентские helpers (`fetchServices`, `saveServices`) |
+| `src/routes/api/services.ts` | API endpoint: GET / POST (сохранение + `verify` для входа в режим) |
+| `src/lib/services-config.ts` | Типы + клиентские helpers (`fetchServices`, `saveServices`, `verifyPassword`, `previewUrls`) |
 | `src/lib/services-data.server.ts` | Серверная логика чтения/записи JSON |
-| `src/components/AdminPanel.tsx` | Модалка администратора (auth + CRUD-форма) |
-| `src/routes/index.tsx` | Главная страница dashboard |
-| `src/components/ServiceCard.tsx` | Карточка сервиса |
+| `src/routes/index.tsx` | Главная страница + режим редактирования (auth, drag, группы) |
+| `src/components/ServiceCard.tsx` | Карточка сервиса (дисплей-ссылка + режим редактирования) |
+| `src/components/ServiceEditorModal.tsx` | Модалка редактирования одного сервиса + превью URL |
+| `src/components/IconPicker.tsx` | Пикер иконок lucide с поиском |
 | `public/favicon.svg` | Favicon |
 | `Dockerfile` / `docker-compose.yml` | Сборка и запуск |
 | `docker-server.mjs` | Node-сервер: статика → SSR fallback |
@@ -114,59 +121,11 @@ curl -X POST http://<host>:6232/api/services \
 
 ## ⚙️ Как добавить / удалить / изменить сервис
 
-Всё управление сервисами ведётся в **одном** файле:
+Пересобирать образ не нужно — список сервисов хранится в данных, а не в коде.
 
-```ts
-// src/lib/services-config.ts
-```
-
-### Добавить сервис
-
-Добавьте объект в массив `servicesData`:
-
-```ts
-{
-  id: "unique-id",           // уникальный идентификатор (латиница, без пробелов)
-  name: "Service Name",      // отображаемое имя
-  group: "Group Name",       // категория для группировки (например: "System", "Media", "Downloads")
-  icon: "IconName",          // имя иконки из lucide-react (https://lucide.dev/icons/)
-  localPort: 8080,           // локальный порт (используется при доступе по IP 192.168.x.x / 10.x.x.x)
-  localPath: "/",            // локальный путь (обычно "/")
-  domain: "service.my.ru",   // внешний домен (используется при удалённом доступе)
-  isVps: false,              // true = пинговать доступность через публичный домен
-  description: "What it does" // краткое описание под названием
-}
-```
-
-**Пример — добавить Pi-hole:**
-
-```ts
-{
-  id: "pihole",
-  name: "Pi-hole",
-  group: "System",
-  icon: "Shield",
-  localPort: 8080,
-  localPath: "/admin",
-  domain: "pihole.my.ru",
-  isVps: false,
-  description: "DNS-level ad blocker"
-}
-```
-
-### Удалить сервис
-
-Просто удалите соответствующий объект из массива `servicesData`.
-
-### Изменить сервис
-
-Отредактируйте поля в существующем объекте.
-
-**После любого изменения** пересоберите образ:
-
-```bash
-docker compose up -d --build
-```
+- **Через UI (рекомендуется):** режим редактирования на странице (см. [«Управление сервисами через UI»](#-управление-сервисами-через-ui)). Добавление плиткой `+`, удаление крестиком, редактирование кликом по карточке.
+- **Через файл:** отредактируйте `data/services.json` (в контейнере — volume `homelab-data`) — это обычный JSON-массив объектов `Service`. Формат полей описан в таблице выше. Изменения подхватываются без пересборки.
+- **Через API:** `POST /api/services` (см. раздел API ниже) — удобно для скриптов и миграций.
 
 ---
 
@@ -176,27 +135,27 @@ Dashboard автоматически определяет, откуда вы з�
 
 | Условие | Определён как | Поведение ссылок |
 |--------|---------------|-----------------|
-| `localhost`, `127.0.0.1`, `192.168.*`, `10.*`, `172.16-31.*` | **Local Network** | Ссылки ведут на `http://<IP>:<localPort><localPath>` |
-| Всё остальное (домен, VPN, интернет) | **Remote Access** | Ссылки ведут на `https://<domain><localPath>` |
+| `localhost`, `127.0.0.1`, `192.168.*`, `10.*`, `172.16-31.*` | **Local Network** | `localProtocol://<localHost или текущий хост>:<localPort><localPath>` (по умолчанию `http`) |
+| Всё остальное (домен, VPN, интернет) | **Remote Access** | `remoteProtocol://<domain>[:remotePort]<localPath>` (по умолчанию `https`) |
 
-Эта логика живёт в функции `resolveServiceUrl()` внутри `src/lib/services-config.ts`.
+Логика живёт в `resolveServiceUrl()` внутри `src/lib/services-config.ts`; определение локальной сети вынесено в `isLocalHost()`.
 
 ```ts
 export function resolveServiceUrl(svc: Service): string {
   const host = window.location.hostname;
-  const isLocal =
-    host === "localhost" ||
-    host === "127.0.0.1" ||
-    /^192\.168\./.test(host) ||      // домашние роутеры
-    /^10\./.test(host) ||            // частные сети 10/8
-    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host); // частные 172.16-31
-
-  if (isLocal) return `http://${host}:${svc.localPort}${svc.localPath}`;
-  return `https://${svc.domain}${svc.localPath}`;
+  if (!isLocalHost(host)) {
+    const proto = svc.remoteProtocol ?? "https";
+    const port = svc.remotePort ? `:${svc.remotePort}` : "";
+    return `${proto}://${svc.domain}${port}${svc.localPath || "/"}`;
+  }
+  const proto = svc.localProtocol ?? "http";
+  const localHost = svc.localHost?.trim() || host;
+  const port = svc.localPort ? `:${svc.localPort}` : "";
+  return `${proto}://${localHost}${port}${svc.localPath || "/"}`;
 }
 ```
 
-> **Подсказка:** если ваш домашний роутер использует другую подсеть (например, `100.64.x.x` Tailscale), добавьте её в регулярное выражение `isLocal`.
+> **Подсказка:** если ваша сеть использует другую подсеть (например, `100.64.x.x` Tailscale), добавьте её в `isLocalHost()`.
 
 ---
 

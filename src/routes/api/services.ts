@@ -57,9 +57,17 @@ export const Route = createFileRoute("/api/services")({
         if (!body || typeof body !== "object") {
           return new Response("Invalid body", { status: 400 });
         }
-        const { adminPassword, services } = body as { adminPassword?: unknown; services?: unknown };
+        const { adminPassword, services, verify } = body as {
+          adminPassword?: unknown;
+          services?: unknown;
+          verify?: unknown;
+        };
         if (typeof adminPassword !== "string" || adminPassword !== getAdminPassword()) {
           return new Response("Unauthorized", { status: 401 });
+        }
+        // Password-only check used to enter edit mode (no write).
+        if (verify === true) {
+          return Response.json({ ok: true });
         }
         if (!Array.isArray(services) || services.length > 500) {
           return new Response("Invalid services payload", { status: 400 });
