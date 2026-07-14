@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
-import { Circle, ExternalLink, Pencil, X } from "lucide-react";
+import { ExternalLink, Pencil, X } from "lucide-react";
 import { pingService, resolveServiceUrl, type Service } from "@/lib/services-config";
 import { resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
 
@@ -60,6 +60,7 @@ export function ServiceCard({
       style?: React.CSSProperties;
     }>) ?? Icons.Box;
   const color = colorProp ?? resolveServiceColor(service);
+  const isOffline = service.isVps && !editing && !loading && status !== null && !status.online;
 
   const inner = (
     <>
@@ -89,24 +90,25 @@ export function ServiceCard({
           {service.domain}
         </span>
         {service.isVps && !editing && (
-          <div className="flex items-center gap-1.5">
+          <div
+            className="flex items-center gap-1.5"
+            title={status ? (status.online ? `${status.rtt}ms` : "Offline") : "Checking…"}
+          >
             {loading ? (
-              <>
-                <Circle className="h-2 w-2 animate-pulse fill-yellow-400 text-yellow-400" />
-                <span className="text-[10px] text-yellow-400/80">...</span>
-              </>
+              <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-400/90" />
             ) : status?.online ? (
               <>
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="text-[10px] font-medium text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100">
+                  {status.rtt}ms
                 </span>
-                <span className="text-[10px] font-medium text-emerald-400">{status.rtt}ms</span>
               </>
             ) : (
               <>
-                <Circle className="h-2 w-2 fill-rose-500 text-rose-500" />
-                <span className="text-[10px] font-medium text-rose-400">Offline</span>
+                <span className="h-2 w-2 rounded-full bg-rose-500" />
+                <span className="text-[10px] font-medium text-rose-400 opacity-0 transition-opacity group-hover:opacity-100">
+                  Offline
+                </span>
               </>
             )}
           </div>
@@ -126,7 +128,9 @@ export function ServiceCard({
         href={resolveServiceUrl(service)}
         target="_blank"
         rel="noopener noreferrer"
-        className="glass-card group relative flex flex-col gap-3 rounded-2xl p-5"
+        className={`glass-card group relative flex flex-col gap-3 rounded-2xl p-5 ${
+          isOffline ? "opacity-55 hover:opacity-100" : ""
+        }`}
       >
         {inner}
       </a>
