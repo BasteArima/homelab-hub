@@ -14,6 +14,11 @@ import {
   Save,
   X,
   Lock,
+  LayoutGrid,
+  Grid3x3,
+  List,
+  ChevronDown,
+  Command,
 } from "lucide-react";
 import {
   fetchServices,
@@ -23,8 +28,21 @@ import {
   type Service,
 } from "@/lib/services-config";
 import { assignGroupColors } from "@/lib/service-colors";
-import { ServiceCard } from "@/components/ServiceCard";
+import { ServiceCard, type Density } from "@/components/ServiceCard";
 import { ServiceEditorModal } from "@/components/ServiceEditorModal";
+import { CommandPalette } from "@/components/CommandPalette";
+
+const DENSITY_OPTIONS: { value: Density; label: string; Icon: typeof LayoutGrid }[] = [
+  { value: "comfortable", label: "Comfortable", Icon: LayoutGrid },
+  { value: "compact", label: "Compact", Icon: Grid3x3 },
+  { value: "list", label: "List", Icon: List },
+];
+
+const GRID_CLASS: Record<Density, string> = {
+  comfortable: "grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5",
+  compact: "grid grid-cols-3 gap-2 sm:grid-cols-4 md:gap-3 lg:grid-cols-6 xl:grid-cols-7",
+  list: "grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-3",
+};
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -114,6 +132,12 @@ function Index() {
     null,
   );
 
+  // Display view controls (persisted)
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [density, setDensity] = useState<Density>("comfortable");
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
+
   const uidRef = useRef(0);
   const nextUid = () => `u${uidRef.current++}`;
   const fileRef = useRef<HTMLInputElement>(null);
@@ -121,6 +145,52 @@ function Index() {
   useEffect(() => {
     setHost(window.location.hostname);
   }, []);
+
+  // Load persisted view prefs after mount (avoids SSR hydration mismatch).
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem("hub.density");
+      if (d === "comfortable" || d === "compact" || d === "list") setDensity(d);
+      const c = localStorage.getItem("hub.collapsed");
+      if (c) setCollapsed(new Set(JSON.parse(c) as string[]));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // ⌘K / Ctrl+K toggles the command palette.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const applyDensity = (d: Density) => {
+    setDensity(d);
+    try {
+      localStorage.setItem("hub.density", d);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const toggleCollapse = (name: string) =>
+    setCollapsed((cur) => {
+      const next = new Set(cur);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      try {
+        localStorage.setItem("hub.collapsed", JSON.stringify([...next]));
+      } catch {
+        /* ignore */
+      }
+      return next;
+    });
 
   useEffect(() => {
     let mounted = true;
@@ -159,6 +229,13 @@ function Index() {
     }
     return { entries: Array.from(groups.entries()), count: filtered.length };
   }, [query, services]);
+
+  // All group names (unfiltered) for the group-navigation chips.
+  const allGroupNames = useMemo(() => {
+    const seen: string[] = [];
+    for (const s of services) if (!seen.includes(s.group)) seen.push(s.group);
+    return seen;
+  }, [services]);
 
   // ── Edit grouping ──────────────────────────────────────────────
   const editGroups = useMemo(() => deriveGroups(draft, emptyGroups), [draft, emptyGroups]);
@@ -491,17 +568,70 @@ function Index() {
       </header>
 
       {!editMode && (
-        <div className="glass-card mb-10 flex items-center gap-3 rounded-2xl px-4 py-3">
-          <Search className="h-4 w-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search services…"
-            className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-          />
-          <kbd className="hidden rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:inline">
-            {displayGrouped.count} / {services.length}
-          </kbd>
+        <div className="mb-8 space-y-3">
+          <div className="glass-card flex items-center gap-3 rounded-2xl px-4 py-3">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search services…"
+              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            />
+            <button
+              onClick={() => setPaletteOpen(true)}
+              title="Command palette (Ctrl/⌘ K)"
+              className="hidden items-center gap-1 rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary/40 hover:text-primary sm:flex"
+            >
+              <Command className="h-3 w-3" />K
+            </button>
+          </div>
+
+          {!loading && !loadError && services.length > 0 && (
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={() => setActiveGroup(null)}
+                  className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                    activeGroup === null
+                      ? "bg-primary/15 text-primary"
+                      : "border border-white/10 text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All
+                </button>
+                {allGroupNames.map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setActiveGroup((cur) => (cur === g ? null : g))}
+                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                      activeGroup === g
+                        ? "bg-primary/15 text-primary"
+                        : "border border-white/10 text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-0.5 rounded-lg border border-white/10 p-0.5">
+                {DENSITY_OPTIONS.map(({ value, label, Icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => applyDensity(value)}
+                    title={label}
+                    aria-label={label}
+                    className={`rounded-md p-1.5 transition-colors ${
+                      density === value
+                        ? "bg-white/10 text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -518,25 +648,39 @@ function Index() {
               Failed to load services: {loadError}
             </div>
           )}
-          {displayGrouped.entries.map(([group, items]) => {
-            const colors = assignGroupColors(items);
-            return (
-              <section key={group}>
-                <div className="mb-4 flex items-center gap-3">
-                  <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                    {group}
-                  </h2>
-                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
-                  <span className="text-[10px] text-muted-foreground/60">{items.length}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-                  {items.map((s, i) => (
-                    <ServiceCard key={s.id} service={s} color={colors[i]} />
-                  ))}
-                </div>
-              </section>
-            );
-          })}
+          {displayGrouped.entries
+            .filter(([group]) => !activeGroup || group === activeGroup)
+            .map(([group, items]) => {
+              const colors = assignGroupColors(items);
+              const isCollapsed = collapsed.has(group);
+              return (
+                <section key={group}>
+                  <button
+                    onClick={() => toggleCollapse(group)}
+                    className="mb-4 flex w-full items-center gap-3 text-left"
+                    title={isCollapsed ? "Expand" : "Collapse"}
+                  >
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+                        isCollapsed ? "-rotate-90" : ""
+                      }`}
+                    />
+                    <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      {group}
+                    </h2>
+                    <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                    <span className="text-[10px] text-muted-foreground/60">{items.length}</span>
+                  </button>
+                  {!isCollapsed && (
+                    <div className={GRID_CLASS[density]}>
+                      {items.map((s, i) => (
+                        <ServiceCard key={s.id} service={s} color={colors[i]} density={density} />
+                      ))}
+                    </div>
+                  )}
+                </section>
+              );
+            })}
           {!loading && !loadError && displayGrouped.entries.length === 0 && (
             <div className="py-20 text-center text-sm text-muted-foreground">
               {services.length === 0
@@ -713,6 +857,12 @@ function Index() {
           onClose={closeEditor}
         />
       )}
+
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+        services={services}
+      />
     </main>
   );
 }
