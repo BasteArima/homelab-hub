@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { X, Trash2, Copy, Check, Wifi, Globe } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { X, Trash2, Copy, Check, Wifi, Globe, ChevronDown, Plus } from "lucide-react";
 import type { Protocol, Service } from "@/lib/services-config";
 import { previewUrls } from "@/lib/services-config";
 import { IconPicker } from "@/components/IconPicker";
@@ -134,7 +134,7 @@ export function ServiceEditorModal({
                 onChange={(e) => set("isVps", e.target.checked)}
                 className="h-4 w-4 accent-primary"
               />
-              <span className="text-xs text-muted-foreground">Ping (VPS status)</span>
+              <span className="text-xs text-muted-foreground">Ping</span>
             </label>
           </div>
 
@@ -204,21 +204,85 @@ function GroupField({
   existing: string[];
   onChange: (v: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDocClick = (e: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const q = value.trim().toLowerCase();
+  const exactMatch = existing.some((g) => g.toLowerCase() === q);
+  // Show the full list when the value is empty or already a group (nothing to
+  // narrow); only filter while the user is typing a genuinely new name.
+  const matches = useMemo(
+    () => (exactMatch || q === "" ? existing : existing.filter((g) => g.toLowerCase().includes(q))),
+    [existing, q, exactMatch],
+  );
+  // Offer to create a new group when the typed value doesn't already exist.
+  const isNew = value.trim().length > 0 && !exactMatch;
+
   return (
-    <label className="flex flex-col gap-1">
+    <div ref={rootRef} className="relative flex flex-col gap-1">
       <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Group</span>
-      <input
-        list="group-suggestions"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
-      />
-      <datalist id="group-suggestions">
-        {existing.map((g) => (
-          <option key={g} value={g} />
-        ))}
-      </datalist>
-    </label>
+      <div className="relative">
+        <input
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={() => setOpen(true)}
+          placeholder="Choose or type…"
+          className="w-full rounded-md border border-white/10 bg-black/30 py-1.5 pl-2 pr-7 text-xs text-foreground outline-none focus:border-primary/60"
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => setOpen((o) => !o)}
+          className="absolute inset-y-0 right-0 flex w-7 items-center justify-center text-muted-foreground hover:text-foreground"
+        >
+          <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </div>
+
+      {open && (matches.length > 0 || isNew) && (
+        <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-[oklch(0.2_0.025_265)] p-1 shadow-2xl">
+          {isNew && (
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-primary hover:bg-white/5"
+            >
+              <Plus className="h-3.5 w-3.5 shrink-0" />
+              Create “{value.trim()}”
+            </button>
+          )}
+          {matches.map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => {
+                onChange(g);
+                setOpen(false);
+              }}
+              className={`flex w-full items-center rounded-md px-2 py-1.5 text-left text-xs hover:bg-white/5 ${
+                g.toLowerCase() === q ? "text-primary" : "text-foreground"
+              }`}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
