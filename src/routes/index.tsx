@@ -33,14 +33,15 @@ import {
   type Service,
 } from "@/lib/services-config";
 import { assignGroupColors } from "@/lib/service-colors";
+import { useI18n } from "@/lib/i18n";
 import { ServiceCard, type Density } from "@/components/ServiceCard";
 import { ServiceEditorModal } from "@/components/ServiceEditorModal";
 import { CommandPalette } from "@/components/CommandPalette";
 
-const DENSITY_OPTIONS: { value: Density; label: string; Icon: typeof LayoutGrid }[] = [
-  { value: "comfortable", label: "Comfortable", Icon: LayoutGrid },
-  { value: "compact", label: "Compact", Icon: Grid3x3 },
-  { value: "list", label: "List", Icon: List },
+const DENSITY_OPTIONS: { value: Density; Icon: typeof LayoutGrid }[] = [
+  { value: "comfortable", Icon: LayoutGrid },
+  { value: "compact", Icon: Grid3x3 },
+  { value: "list", Icon: List },
 ];
 
 const GRID_CLASS: Record<Density, string> = {
@@ -109,6 +110,7 @@ function useClock() {
 }
 
 function Index() {
+  const { t, lang, setLang } = useI18n();
   const [query, setQuery] = useState("");
   const now = useClock();
   const [host, setHost] = useState("");
@@ -304,7 +306,7 @@ function Index() {
     try {
       const ok = await verifyPassword(loginPassword);
       if (!ok) {
-        setLoginError("Invalid password");
+        setLoginError(t("invalid_password"));
         return;
       }
       setLoginPassword("");
@@ -312,7 +314,7 @@ function Index() {
       setAuthed(true);
       startEditing();
     } catch {
-      setLoginError("Network error — try again");
+      setLoginError(t("network_error"));
     } finally {
       setLoginBusy(false);
     }
@@ -325,7 +327,7 @@ function Index() {
     try {
       const ok = await verifyPassword(loginPassword);
       if (!ok) {
-        setLoginError("Invalid password");
+        setLoginError(t("invalid_password"));
         return;
       }
       setLoginPassword("");
@@ -335,14 +337,14 @@ function Index() {
         .then((s) => setServices(s))
         .catch((e) => setLoadError(e.message));
     } catch {
-      setLoginError("Network error — try again");
+      setLoginError(t("network_error"));
     } finally {
       setLoginBusy(false);
     }
   };
 
   const cancelEdit = () => {
-    if (dirty && !window.confirm("Discard unsaved changes?")) return;
+    if (dirty && !window.confirm(t("discard_changes"))) return;
     setEditMode(false);
     setDraft([]);
     setEmptyGroups([]);
@@ -350,14 +352,14 @@ function Index() {
   };
 
   const signOut = async () => {
-    if (dirty && !window.confirm("Discard unsaved changes and sign out?")) return;
+    if (dirty && !window.confirm(t("discard_signout"))) return;
     await logout();
     setAuthed(false);
     setEditMode(false);
     setDraft([]);
     setEmptyGroups([]);
     setEditorUid(null);
-    toast.success("Signed out");
+    toast.success(t("signed_out"));
   };
 
   const saveEdit = async () => {
@@ -369,12 +371,12 @@ function Index() {
       setDraft([]);
       setEmptyGroups([]);
       setEditorUid(null);
-      toast.success(`Saved ${orderedDraft.length} services`);
+      toast.success(t("saved_n", { n: orderedDraft.length }));
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Save failed";
       if (msg === "Invalid password") {
         setAuthed(false);
-        setLoginError("Session expired — sign in again");
+        setLoginError(t("session_expired"));
         setLoginOpen(true);
       }
       toast.error(msg);
@@ -393,9 +395,9 @@ function Index() {
     const removed = draft[idx];
     setDraft((cur) => cur.filter((i) => i.uid !== uid));
     if (editorUid === uid) setEditorUid(null);
-    toast(`Deleted “${removed.svc.name || removed.svc.id || "service"}”`, {
+    toast(t("deleted_x", { x: removed.svc.name || removed.svc.id || t("service") }), {
       action: {
-        label: "Undo",
+        label: t("undo"),
         onClick: () =>
           setDraft((cur) => {
             const arr = [...cur];
@@ -542,22 +544,23 @@ function Index() {
   const handleImportFile = async (file: File) => {
     try {
       const parsed = JSON.parse(await file.text());
-      if (!Array.isArray(parsed)) throw new Error("File must contain a JSON array");
+      if (!Array.isArray(parsed)) throw new Error(t("import_bad"));
       uidRef.current = 0;
       setDraft((parsed as Service[]).map((svc) => ({ uid: nextUid(), svc })));
       setEmptyGroups([]);
       setNewUids(new Set());
-      toast.success(`Imported ${parsed.length} services`);
+      toast.success(t("imported_n", { n: parsed.length }));
     } catch (e) {
-      toast.error(e instanceof Error ? `Import failed: ${e.message}` : "Import failed");
+      toast.error(t("import_failed", { msg: e instanceof Error ? e.message : "" }));
     }
   };
 
+  const dateLocale = lang === "ru" ? "ru-RU" : "en-US";
   const time = now
-    ? now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    ? now.toLocaleTimeString(dateLocale, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
     : "--:--:--";
   const date = now
-    ? now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" })
+    ? now.toLocaleDateString(dateLocale, { weekday: "long", month: "long", day: "numeric" })
     : "";
 
   const editorItem = editorUid ? draft.find((i) => i.uid === editorUid) : null;
@@ -583,16 +586,14 @@ function Index() {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-hairline">
             <Lock className="h-6 w-6 text-primary" />
           </div>
-          <p className="text-center text-sm text-muted-foreground">
-            This dashboard is private. Enter the admin password to continue.
-          </p>
+          <p className="text-center text-sm text-muted-foreground">{t("private_prompt")}</p>
           <input
             autoFocus
             type="password"
             value={loginPassword}
             onChange={(e) => setLoginPassword(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && loginPassword && !loginBusy && doUnlock()}
-            placeholder="Password"
+            placeholder={t("password")}
             className="w-full rounded-lg border border-hairline bg-field px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
           />
           {loginError && <p className="text-xs text-rose-400">{loginError}</p>}
@@ -601,7 +602,7 @@ function Index() {
             onClick={doUnlock}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
           >
-            {loginBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unlock"}
+            {loginBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("unlock")}
           </button>
         </div>
       </div>
@@ -615,10 +616,10 @@ function Index() {
         <div className="sticky top-0 z-30 -mx-4 mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-primary/20 bg-background/85 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Pencil className="h-4 w-4 text-primary" />
-            Editing
+            {t("editing")}
             {dirty && (
               <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-300">
-                Unsaved changes
+                {t("unsaved_changes")}
               </span>
             )}
           </div>
@@ -638,26 +639,26 @@ function Index() {
               onClick={() => fileRef.current?.click()}
               className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
-              <Upload className="h-3.5 w-3.5" /> Import
+              <Upload className="h-3.5 w-3.5" /> {t("import")}
             </button>
             <button
               onClick={handleExport}
               className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
-              <Download className="h-3.5 w-3.5" /> Export
+              <Download className="h-3.5 w-3.5" /> {t("export")}
             </button>
             <button
               onClick={signOut}
-              title="Sign out (forget this device)"
+              title={t("sign_out_title")}
               className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-muted-foreground hover:bg-fill1 hover:text-foreground"
             >
-              <LogOut className="h-3.5 w-3.5" /> Sign out
+              <LogOut className="h-3.5 w-3.5" /> {t("sign_out")}
             </button>
             <button
               onClick={cancelEdit}
               className="rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
-              Cancel
+              {t("cancel")}
             </button>
             <button
               onClick={saveEdit}
@@ -665,7 +666,7 @@ function Index() {
               className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
             >
               <Save className="h-3.5 w-3.5" />
-              {saving ? "Saving…" : "Save"}
+              {saving ? t("saving") : t("save")}
             </button>
           </div>
         </div>
@@ -675,7 +676,7 @@ function Index() {
         <div>
           <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
             {isLocal ? <Wifi className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
-            <span>{isLocal ? "Local Network" : "Remote Access"}</span>
+            <span>{isLocal ? t("local_network") : t("remote_access")}</span>
             <span className="text-muted-foreground/50">•</span>
             <span className="font-mono">{host || "—"}</span>
           </div>
@@ -686,8 +687,16 @@ function Index() {
         </div>
         <div className="flex items-center gap-2 sm:items-end">
           <button
+            onClick={() => setLang(lang === "en" ? "ru" : "en")}
+            title={lang === "en" ? "Русский" : "English"}
+            aria-label="Language"
+            className="rounded-xl border border-hairline bg-fill1 px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            {lang.toUpperCase()}
+          </button>
+          <button
             onClick={toggleTheme}
-            title={theme === "dark" ? "Light theme" : "Dark theme"}
+            title={theme === "dark" ? t("light_theme") : t("dark_theme")}
             aria-label="Toggle theme"
             className="rounded-xl border border-hairline bg-fill1 p-2.5 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
           >
@@ -697,9 +706,9 @@ function Index() {
             <button
               onClick={requestEdit}
               className="flex items-center gap-2 rounded-xl border border-hairline bg-fill1 px-3 py-2.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-              title={authed ? "Edit dashboard" : "Sign in to edit"}
+              title={authed ? t("edit_dashboard") : t("signin_to_edit")}
             >
-              <Pencil className="h-4 w-4" /> Edit
+              <Pencil className="h-4 w-4" /> {t("edit")}
             </button>
           )}
           <div className="text-right">
@@ -717,12 +726,12 @@ function Index() {
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search services…"
+              placeholder={t("search_services")}
               className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
             />
             <button
               onClick={() => setPaletteOpen(true)}
-              title="Command palette (Ctrl/⌘ K)"
+              title={t("command_palette")}
               className="hidden items-center gap-1 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary/40 hover:text-primary sm:flex"
             >
               <Command className="h-3 w-3" />K
@@ -740,7 +749,7 @@ function Index() {
                       : "border border-hairline text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  All
+                  {t("all")}
                 </button>
                 {allGroupNames.map((g) => (
                   <button
@@ -757,12 +766,12 @@ function Index() {
                 ))}
               </div>
               <div className="flex items-center gap-0.5 rounded-lg border border-hairline p-0.5">
-                {DENSITY_OPTIONS.map(({ value, label, Icon }) => (
+                {DENSITY_OPTIONS.map(({ value, Icon }) => (
                   <button
                     key={value}
                     onClick={() => applyDensity(value)}
-                    title={label}
-                    aria-label={label}
+                    title={t(value)}
+                    aria-label={t(value)}
                     className={`rounded-md p-1.5 transition-colors ${
                       density === value
                         ? "bg-fill2 text-foreground"
@@ -783,12 +792,12 @@ function Index() {
         <div className="space-y-10 pb-16">
           {loading && (
             <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> Loading services…
+              <Loader2 className="h-4 w-4 animate-spin" /> {t("loading_services")}
             </div>
           )}
           {loadError && !loading && (
             <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
-              Failed to load services: {loadError}
+              {t("failed_load", { msg: loadError })}
             </div>
           )}
           {displayGrouped.entries
@@ -801,7 +810,7 @@ function Index() {
                   <button
                     onClick={() => toggleCollapse(group)}
                     className="mb-4 flex w-full items-center gap-3 text-left"
-                    title={isCollapsed ? "Expand" : "Collapse"}
+                    title={isCollapsed ? t("expand") : t("collapse")}
                   >
                     <ChevronDown
                       className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
@@ -826,9 +835,7 @@ function Index() {
             })}
           {!loading && !loadError && displayGrouped.entries.length === 0 && (
             <div className="py-20 text-center text-sm text-muted-foreground">
-              {services.length === 0
-                ? "No services yet. Click Edit to add some."
-                : `No services match "${query}"`}
+              {services.length === 0 ? t("no_services_yet") : t("no_match", { q: query })}
             </div>
           )}
         </div>
@@ -869,7 +876,7 @@ function Index() {
                     value={group.name}
                     onChange={(e) => renameGroup(group.name, e.target.value)}
                     className="min-w-0 rounded-md bg-transparent px-1 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none focus:bg-field focus:text-foreground"
-                    title="Rename group"
+                    title={t("rename_group")}
                   />
                   <div className="h-px flex-1 bg-gradient-to-r from-hairline to-transparent" />
                   <span className="text-[10px] text-muted-foreground/60">{group.items.length}</span>
@@ -877,7 +884,7 @@ function Index() {
                     <button
                       onClick={() => removeEmptyGroup(group.name)}
                       className="rounded-md p-1 text-rose-400/70 hover:bg-rose-500/10 hover:text-rose-400"
-                      title="Remove empty group"
+                      title={t("remove_empty_group")}
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -930,10 +937,10 @@ function Index() {
                   <button
                     onClick={() => addToGroup(group.name)}
                     className="flex min-h-[8.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
-                    title="Add service to this group"
+                    title={t("add_service_group")}
                   >
                     <Plus className="h-7 w-7" />
-                    <span className="text-xs">Add</span>
+                    <span className="text-xs">{t("add")}</span>
                   </button>
                 </div>
               </section>
@@ -944,7 +951,7 @@ function Index() {
             onClick={addGroup}
             className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline py-4 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary"
           >
-            <FolderPlus className="h-4 w-4" /> New group
+            <FolderPlus className="h-4 w-4" /> {t("new_group")}
           </button>
         </div>
       )}
@@ -959,16 +966,14 @@ function Index() {
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-hairline">
               <Lock className="h-6 w-6 text-primary" />
             </div>
-            <p className="text-sm text-muted-foreground">
-              Enter admin password to edit the dashboard.
-            </p>
+            <p className="text-sm text-muted-foreground">{t("enter_password_edit")}</p>
             <input
               autoFocus
               type="password"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && loginPassword && !loginBusy && doLogin()}
-              placeholder="Password"
+              placeholder={t("password")}
               className="w-full rounded-lg border border-hairline bg-field px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
             />
             {loginError && <p className="text-xs text-rose-400">{loginError}</p>}
@@ -977,14 +982,14 @@ function Index() {
                 onClick={() => setLoginOpen(false)}
                 className="flex-1 rounded-lg border border-hairline px-4 py-2 text-sm text-foreground hover:bg-fill1"
               >
-                Cancel
+                {t("cancel")}
               </button>
               <button
                 disabled={!loginPassword || loginBusy}
                 onClick={doLogin}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
               >
-                {loginBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Continue"}
+                {loginBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("continue")}
               </button>
             </div>
           </div>

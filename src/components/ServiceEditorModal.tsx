@@ -5,6 +5,7 @@ import { previewUrls } from "@/lib/services-config";
 import { SERVICE_COLORS, resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
 import { autoLogoSlug } from "@/lib/logos";
 import { IconPicker } from "@/components/IconPicker";
+import { useI18n } from "@/lib/i18n";
 
 type Props = {
   service: Service;
@@ -34,6 +35,7 @@ export function ServiceEditorModal({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const { t } = useI18n();
   const set = <K extends keyof Service>(key: K, value: Service[K]) =>
     onChange({ ...service, [key]: value });
 
@@ -47,7 +49,9 @@ export function ServiceEditorModal({
       <div className="glass-card flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl">
         <header className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <h2 className="text-sm font-semibold text-foreground">
-            {isNew ? "New service" : `Edit · ${service.name || service.id || "service"}`}
+            {isNew
+              ? t("new_service")
+              : `${t("edit_word")} · ${service.name || service.id || t("service")}`}
           </h2>
           <button
             onClick={onClose}
@@ -60,8 +64,13 @@ export function ServiceEditorModal({
         <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {/* Identity */}
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Name" value={service.name} onChange={(v) => set("name", v)} />
-            <Field label="ID" value={service.id} onChange={(v) => set("id", v)} hint="unique" />
+            <Field label={t("name")} value={service.name} onChange={(v) => set("name", v)} />
+            <Field
+              label="ID"
+              value={service.id}
+              onChange={(v) => set("id", v)}
+              hint={t("unique")}
+            />
             <IconPicker
               value={service.icon}
               autoSlug={autoLogoSlug(service)}
@@ -73,7 +82,7 @@ export function ServiceEditorModal({
               onChange={(v) => set("group", v)}
             />
             <Field
-              label="Description"
+              label={t("description")}
               value={service.description || ""}
               onChange={(v) => set("description", v)}
               className="col-span-2"
@@ -84,7 +93,7 @@ export function ServiceEditorModal({
           {/* Local access */}
           <fieldset className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.03] p-3">
             <legend className="flex items-center gap-1.5 px-1 text-[11px] font-medium uppercase tracking-wider text-emerald-400/80">
-              <Wifi className="h-3 w-3" /> Local
+              <Wifi className="h-3 w-3" /> {t("local")}
             </legend>
             <div className="grid grid-cols-[auto_1fr_auto] gap-2">
               <ProtoSelect
@@ -92,13 +101,13 @@ export function ServiceEditorModal({
                 onChange={(v) => set("localProtocol", v)}
               />
               <Field
-                label="Host / IP"
+                label={t("host_ip")}
                 value={service.localHost || ""}
                 onChange={(v) => set("localHost", v)}
-                hint="blank = this host"
+                hint={t("blank_this_host")}
               />
               <Field
-                label="Port"
+                label={t("port")}
                 type="number"
                 value={service.localPort ? String(service.localPort) : ""}
                 onChange={(v) => set("localPort", Number(v) || 0)}
@@ -110,20 +119,24 @@ export function ServiceEditorModal({
           {/* Remote access */}
           <fieldset className="rounded-xl border border-sky-400/20 bg-sky-400/[0.03] p-3">
             <legend className="flex items-center gap-1.5 px-1 text-[11px] font-medium uppercase tracking-wider text-sky-400/80">
-              <Globe className="h-3 w-3" /> Remote
+              <Globe className="h-3 w-3" /> {t("remote")}
             </legend>
             <div className="grid grid-cols-[auto_1fr_auto] gap-2">
               <ProtoSelect
                 value={service.remoteProtocol ?? "https"}
                 onChange={(v) => set("remoteProtocol", v)}
               />
-              <Field label="Domain" value={service.domain} onChange={(v) => set("domain", v)} />
               <Field
-                label="Port"
+                label={t("domain")}
+                value={service.domain}
+                onChange={(v) => set("domain", v)}
+              />
+              <Field
+                label={t("port")}
                 type="number"
                 value={service.remotePort ? String(service.remotePort) : ""}
                 onChange={(v) => set("remotePort", Number(v) || 0)}
-                hint="optional"
+                hint={t("optional")}
                 className="w-20"
               />
             </div>
@@ -132,10 +145,10 @@ export function ServiceEditorModal({
           {/* Shared */}
           <div className="grid grid-cols-[1fr_auto] items-end gap-3">
             <Field
-              label="Path"
+              label={t("path")}
               value={service.localPath}
               onChange={(v) => set("localPath", v)}
-              hint="added to both"
+              hint={t("added_to_both")}
             />
             <label className="flex cursor-pointer items-center gap-2 pb-1.5">
               <input
@@ -144,13 +157,15 @@ export function ServiceEditorModal({
                 onChange={(e) => set("isVps", e.target.checked)}
                 className="h-4 w-4 accent-primary"
               />
-              <span className="text-xs text-muted-foreground">Ping</span>
+              <span className="text-xs text-muted-foreground">{t("ping")}</span>
             </label>
           </div>
 
           {/* Live URL preview */}
           <div className="space-y-1.5 rounded-xl border border-hairline bg-field p-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Opens</p>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+              {t("opens")}
+            </p>
             <div className="flex items-center gap-2 text-xs">
               <Wifi className="h-3 w-3 shrink-0 text-emerald-400/80" />
               <span className="truncate font-mono text-emerald-300/90">{urls.local}</span>
@@ -167,20 +182,20 @@ export function ServiceEditorModal({
             onClick={onDelete}
             className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10"
           >
-            <Trash2 className="h-3.5 w-3.5" /> Delete
+            <Trash2 className="h-3.5 w-3.5" /> {t("delete")}
           </button>
           <div className="flex gap-2">
             <button
               onClick={onDuplicate}
               className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
-              <Copy className="h-3.5 w-3.5" /> Duplicate
+              <Copy className="h-3.5 w-3.5" /> {t("duplicate")}
             </button>
             <button
               onClick={onClose}
               className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
             >
-              <Check className="h-3.5 w-3.5" /> Done
+              <Check className="h-3.5 w-3.5" /> {t("done")}
             </button>
           </div>
         </footer>
@@ -190,9 +205,12 @@ export function ServiceEditorModal({
 }
 
 function ProtoSelect({ value, onChange }: { value: Protocol; onChange: (v: Protocol) => void }) {
+  const { t } = useI18n();
   return (
     <label className="flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Proto</span>
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {t("proto")}
+      </span>
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Protocol)}
@@ -214,17 +232,20 @@ function ColorField({
   autoColor?: ResolvedColor | null;
   onChange: (color: string | undefined) => void;
 }) {
+  const { t } = useI18n();
   const auto =
     autoColor ?? resolveServiceColor({ id: service.id, name: service.name, color: undefined });
   const isAuto = !service.color || !SERVICE_COLORS.some((c) => c.key === service.color);
   return (
     <div className="col-span-2 flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Color</span>
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {t("color")}
+      </span>
       <div className="flex flex-wrap items-center gap-1.5">
         <button
           type="button"
           onClick={() => onChange(undefined)}
-          title="Auto (from id)"
+          title={t("auto_from_id")}
           className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] ${
             isAuto
               ? "border-primary/60 text-foreground"
@@ -232,7 +253,7 @@ function ColorField({
           }`}
         >
           <span className="h-3 w-3 rounded-full" style={{ background: auto.fg }} />
-          Auto
+          {t("auto")}
         </button>
         {SERVICE_COLORS.map((c) => {
           const selected = service.color === c.key;
@@ -264,6 +285,7 @@ function GroupField({
   existing: string[];
   onChange: (v: string) => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -294,13 +316,15 @@ function GroupField({
 
   return (
     <div ref={rootRef} className="relative flex flex-col gap-1">
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Group</span>
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+        {t("group")}
+      </span>
       <div className="relative">
         <input
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setOpen(true)}
-          placeholder="Choose or type…"
+          placeholder={t("choose_or_type")}
           className="w-full rounded-md border border-hairline bg-field py-1.5 pl-2 pr-7 text-xs text-foreground outline-none focus:border-primary/60"
         />
         <button
@@ -322,7 +346,7 @@ function GroupField({
               className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-primary hover:bg-fill1"
             >
               <Plus className="h-3.5 w-3.5 shrink-0" />
-              Create “{value.trim()}”
+              {t("create")} “{value.trim()}”
             </button>
           )}
           {matches.map((g) => (

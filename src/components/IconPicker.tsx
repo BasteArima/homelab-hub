@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as Icons from "lucide-react";
 import { Search, X, Sparkles } from "lucide-react";
 import { LOGO_SLUGS, canonicalSlug, logoUrl } from "@/lib/logos";
+import { useI18n, type TFn } from "@/lib/i18n";
 
 type IconComponent = React.ComponentType<{ className?: string }>;
 
@@ -21,6 +22,7 @@ const MAX_LOGOS = 48;
 type Props = { value: string; onChange: (v: string) => void; autoSlug?: string | null };
 
 export function IconPicker({ value, onChange, autoSlug }: Props) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const rootRef = useRef<HTMLDivElement>(null);
@@ -57,13 +59,13 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
   return (
     <div ref={rootRef} className="relative">
       <span className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground">
-        Icon
+        {t("icon")}
         <a
           href="https://dashboardicons.com"
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary/70 hover:text-primary"
-          title="Browse brand logos"
+          title={t("browse_brand_logos")}
         >
           ↗
         </a>
@@ -76,7 +78,7 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
         <span className="flex h-6 w-6 items-center justify-center rounded bg-fill1">
           <TriggerIcon value={value} autoSlug={autoSlug} />
         </span>
-        <span className="truncate">{labelFor(value, autoSlug)}</span>
+        <span className="truncate">{labelFor(value, autoSlug, t)}</span>
       </button>
 
       {open && (
@@ -87,7 +89,7 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search logos & icons…"
+              placeholder={t("search_logos_icons")}
               className="w-full bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
             />
             {query && (
@@ -110,14 +112,14 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
             }`}
           >
             <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
-            Auto {autoSlug ? `(logo: ${autoSlug})` : "(icon from name)"}
+            {t("auto")} {autoSlug ? `(logo: ${autoSlug})` : `(${t("icon_from_name")})`}
           </button>
 
           <div className="max-h-60 overflow-y-auto">
             {logos.length > 0 && (
               <>
                 <p className="px-1 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                  Logos
+                  {t("logos")}
                 </p>
                 <div className="mb-2 grid grid-cols-6 gap-1">
                   {logos.map((slug) => {
@@ -143,7 +145,7 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
             )}
 
             <p className="px-1 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/60">
-              Icons
+              {t("icons")}
             </p>
             <div className="grid grid-cols-6 gap-1">
               {lucides.map((name) => {
@@ -169,8 +171,8 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
           </div>
           <p className="mt-1 px-1 text-[10px] text-muted-foreground/60">
             {q
-              ? `${logos.length} logos · ${lucides.length} icons`
-              : "Type a name to find brand logos"}
+              ? t("counts_logos_icons", { logos: logos.length, icons: lucides.length })
+              : t("type_to_find_logos")}
           </p>
         </div>
       )}
@@ -192,10 +194,10 @@ function TriggerIcon({ value, autoSlug }: { value: string; autoSlug?: string | n
   return <Cmp className="h-4 w-4 text-primary" />;
 }
 
-function labelFor(value: string, autoSlug?: string | null): string {
+function labelFor(value: string, autoSlug: string | null | undefined, t: TFn): string {
   if (value.startsWith("logo:")) return value.slice(5);
   if (value.startsWith("lucide:")) return value.slice(7);
-  if (/^https?:\/\//i.test(value)) return "custom URL";
-  if (value === "") return autoSlug ? `Auto · ${autoSlug}` : "Auto";
+  if (/^https?:\/\//i.test(value)) return t("custom_url");
+  if (value === "") return autoSlug ? `${t("auto")} · ${autoSlug}` : t("auto");
   return value;
 }

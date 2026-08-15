@@ -4,6 +4,7 @@ import { ExternalLink, Pencil, X, ChevronUp, ChevronDown } from "lucide-react";
 import { pingService, resolveServiceUrl, type Service } from "@/lib/services-config";
 import { resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
 import { resolveIcon } from "@/lib/logos";
+import { useI18n } from "@/lib/i18n";
 
 export type Density = "comfortable" | "compact" | "list";
 
@@ -42,6 +43,7 @@ export function ServiceCard({
   onDrop,
   onDragEnd,
 }: Props) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<{ online: boolean; rtt: number | null } | null>(null);
   const [loading, setLoading] = useState(service.isVps);
   const [imgError, setImgError] = useState(false);
@@ -104,7 +106,7 @@ export function ServiceCard({
     service.isVps && !editing ? (
       <div
         className="flex shrink-0 items-center gap-1.5"
-        title={status ? (status.online ? `${status.rtt}ms` : "Offline") : "Checking…"}
+        title={status ? (status.online ? `${status.rtt}ms` : t("offline")) : t("checking")}
       >
         {loading ? (
           <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-400/90" />
@@ -119,7 +121,7 @@ export function ServiceCard({
           <>
             <span className="h-2 w-2 rounded-full bg-rose-500" />
             <span className="text-[10px] font-medium text-rose-400 opacity-0 transition-opacity group-hover:opacity-100">
-              Offline
+              {t("offline")}
             </span>
           </>
         )}
@@ -139,7 +141,7 @@ export function ServiceCard({
       </div>
       <div className="min-w-0">
         <h3 className="truncate text-sm font-semibold text-foreground">
-          {service.name || "Untitled"}
+          {service.name || t("untitled")}
         </h3>
         {service.description && (
           <p className="truncate text-xs text-muted-foreground">{service.description}</p>
@@ -152,7 +154,7 @@ export function ServiceCard({
         {statusEl}
         {service.isVps && editing && (
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground/50">
-            ping
+            {t("ping_lower")}
           </span>
         )}
       </div>
@@ -177,7 +179,7 @@ export function ServiceCard({
             e.stopPropagation();
             onDelete?.();
           }}
-          title="Delete service"
+          title={t("delete_service")}
           className="absolute -right-2 -top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-rose-500/40 bg-rose-950/80 text-rose-300 opacity-0 shadow-lg transition-opacity hover:bg-rose-900 group-hover:opacity-100"
         >
           <X className="h-3.5 w-3.5" />
@@ -190,8 +192,8 @@ export function ServiceCard({
                 onMoveUp?.();
               }}
               disabled={!onMoveUp}
-              title="Move up"
-              aria-label="Move up"
+              title={t("move_up")}
+              aria-label={t("move_up")}
               className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-fill2 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <ChevronUp className="h-4 w-4" />
@@ -202,8 +204,8 @@ export function ServiceCard({
                 onMoveDown?.();
               }}
               disabled={!onMoveDown}
-              title="Move down"
-              aria-label="Move down"
+              title={t("move_down")}
+              aria-label={t("move_down")}
               className="flex h-7 w-7 items-center justify-center border-l border-hairline text-muted-foreground hover:bg-fill2 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <ChevronDown className="h-4 w-4" />
@@ -231,7 +233,7 @@ export function ServiceCard({
         {tile("h-9 w-9", "h-5 w-5")}
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-medium text-foreground">
-            {service.name || "Untitled"}
+            {service.name || t("untitled")}
           </h3>
           {service.description && (
             <p className="truncate text-[11px] text-muted-foreground">{service.description}</p>
@@ -256,7 +258,7 @@ export function ServiceCard({
           )}
         </div>
         <h3 className="truncate text-xs font-medium text-foreground">
-          {service.name || "Untitled"}
+          {service.name || t("untitled")}
         </h3>
       </a>
     );

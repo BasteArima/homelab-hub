@@ -3,6 +3,7 @@ import * as Icons from "lucide-react";
 import { Search, CornerDownLeft } from "lucide-react";
 import { resolveServiceUrl, type Service } from "@/lib/services-config";
 import { resolveIcon } from "@/lib/logos";
+import { useI18n } from "@/lib/i18n";
 
 type Props = {
   open: boolean;
@@ -11,6 +12,7 @@ type Props = {
 };
 
 export function CommandPalette({ open, onClose, services }: Props) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -74,7 +76,7 @@ export function CommandPalette({ open, onClose, services }: Props) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Jump to a service…"
+            placeholder={t("jump_to_service")}
             className="h-12 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
           <kbd className="rounded border border-hairline px-1.5 py-0.5 text-[10px] text-muted-foreground">
@@ -83,7 +85,9 @@ export function CommandPalette({ open, onClose, services }: Props) {
         </div>
         <div ref={listRef} className="flex-1 overflow-y-auto p-2">
           {results.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No services found.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {t("no_services_found")}
+            </p>
           ) : (
             results.map((svc, i) => (
               <button
