@@ -19,12 +19,15 @@ import {
   List,
   ChevronDown,
   Command,
+  LogOut,
 } from "lucide-react";
 import {
   fetchServices,
   isLocalHost,
   saveServices,
   verifyPassword,
+  checkSession,
+  logout,
   type Service,
 } from "@/lib/services-config";
 import { assignGroupColors } from "@/lib/service-colors";
@@ -113,7 +116,7 @@ function Index() {
 
   // Edit mode
   const [editMode, setEditMode] = useState(false);
-  const [password, setPassword] = useState("");
+  const [authed, setAuthed] = useState(false);
   const [draft, setDraft] = useState<Draft[]>([]);
   const [emptyGroups, setEmptyGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -144,6 +147,11 @@ function Index() {
 
   useEffect(() => {
     setHost(window.location.hostname);
+  }, []);
+
+  // Restore an existing admin session so Edit doesn't re-prompt for the password.
+  useEffect(() => {
+    checkSession().then(setAuthed);
   }, []);
 
   // Load persisted view prefs after mount (avoids SSR hydration mismatch).
@@ -251,6 +259,22 @@ function Index() {
   );
 
   // ── Login → enter edit mode ────────────────────────────────────
+  const startEditing = () => {
+    uidRef.current = 0;
+    setDraft(services.map((svc) => ({ uid: nextUid(), svc })));
+    setEmptyGroups([]);
+    setNewUids(new Set());
+    setEditMode(true);
+  };
+
+  const requestEdit = () => {
+    if (authed) startEditing();
+    else {
+      setLoginError(null);
+      setLoginOpen(true);
+    }
+  };
+
   const doLogin = async () => {
     setLoginBusy(true);
     setLoginError(null);
@@ -260,14 +284,10 @@ function Index() {
         setLoginError("Invalid password");
         return;
       }
-      setPassword(loginPassword);
       setLoginPassword("");
       setLoginOpen(false);
-      uidRef.current = 0;
-      setDraft(services.map((svc) => ({ uid: nextUid(), svc })));
-      setEmptyGroups([]);
-      setNewUids(new Set());
-      setEditMode(true);
+      setAuthed(true);
+      startEditing();
     } catch {
       setLoginError("Network error — try again");
     } finally {
@@ -283,10 +303,21 @@ function Index() {
     setEditorUid(null);
   };
 
+  const signOut = async () => {
+    if (dirty && !window.confirm("Discard unsaved changes and sign out?")) return;
+    await logout();
+    setAuthed(false);
+    setEditMode(false);
+    setDraft([]);
+    setEmptyGroups([]);
+    setEditorUid(null);
+    toast.success("Signed out");
+  };
+
   const saveEdit = async () => {
     setSaving(true);
     try {
-      await saveServices(orderedDraft, password);
+      await saveServices(orderedDraft);
       setServices(orderedDraft);
       setEditMode(false);
       setDraft([]);
@@ -296,7 +327,8 @@ function Index() {
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Save failed";
       if (msg === "Invalid password") {
-        setLoginError("Password no longer valid — sign in again");
+        setAuthed(false);
+        setLoginError("Session expired — sign in again");
         setLoginOpen(true);
       }
       toast.error(msg);
@@ -536,6 +568,13 @@ function Index() {
               <Download className="h-3.5 w-3.5" /> Export
             </button>
             <button
+              onClick={signOut}
+              title="Sign out (forget this device)"
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground"
+            >
+              <LogOut className="h-3.5 w-3.5" /> Sign out
+            </button>
+            <button
               onClick={cancelEdit}
               className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-foreground hover:bg-white/5"
             >
@@ -569,12 +608,9 @@ function Index() {
         <div className="flex items-center gap-4 sm:items-end">
           {!editMode && (
             <button
-              onClick={() => {
-                setLoginError(null);
-                setLoginOpen(true);
-              }}
+              onClick={requestEdit}
               className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-              title="Edit dashboard"
+              title={authed ? "Edit dashboard" : "Sign in to edit"}
             >
               <Pencil className="h-4 w-4" /> Edit
             </button>

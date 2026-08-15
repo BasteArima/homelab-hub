@@ -44,14 +44,37 @@ export async function fetchServices(): Promise<Service[]> {
   return res.json();
 }
 
-export async function saveServices(services: Service[], adminPassword: string): Promise<void> {
+export async function saveServices(services: Service[], adminPassword?: string): Promise<void> {
+  // adminPassword is optional: the session cookie authorizes saves after login.
+  const body = adminPassword ? { adminPassword, services } : { services };
   const res = await fetch("/api/services", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ adminPassword, services }),
+    body: JSON.stringify(body),
   });
   if (res.status === 401) throw new Error("Invalid password");
   if (!res.ok) throw new Error(`Save failed: ${res.status} ${await res.text()}`);
+}
+
+/** Whether this browser already holds a valid admin session cookie. */
+export async function checkSession(): Promise<boolean> {
+  try {
+    const res = await fetch("/api/session", { cache: "no-store" });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { authed?: boolean };
+    return !!data.authed;
+  } catch {
+    return false;
+  }
+}
+
+/** Clears the admin session cookie. */
+export async function logout(): Promise<void> {
+  try {
+    await fetch("/api/session", { method: "POST" });
+  } catch {
+    /* ignore */
+  }
 }
 
 function remoteUrl(svc: Service): string {

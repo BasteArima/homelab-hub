@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { readServices, writeServices, getAdminPassword } from "@/lib/services-data.server";
+import { isAuthed, sessionSetCookie } from "@/lib/session.server";
 import type { Service } from "@/lib/services-config";
 
 function isValidService(s: unknown): s is Service {
@@ -63,12 +64,21 @@ export const Route = createFileRoute("/api/services")({
           services?: unknown;
           verify?: unknown;
         };
-        if (typeof adminPassword !== "string" || adminPassword !== getAdminPassword()) {
+        // Authorize by password (fresh login) or by an existing session cookie.
+        const byPassword =
+          typeof adminPassword === "string" && adminPassword === getAdminPassword();
+        const byCookie = await isAuthed(request);
+        if (!byPassword && !byCookie) {
           return new Response("Unauthorized", { status: 401 });
         }
+        // Issue/refresh the session cookie whenever the password was verified.
+        const cookieHeaders: HeadersInit = byPassword
+          ? { "Set-Cookie": await sessionSetCookie() }
+          : {};
+
         // Password-only check used to enter edit mode (no write).
         if (verify === true) {
-          return Response.json({ ok: true });
+          return Response.json({ ok: true }, { headers: cookieHeaders });
         }
         if (!Array.isArray(services) || services.length > 500) {
           return new Response("Invalid services payload", { status: 400 });
@@ -84,7 +94,7 @@ export const Route = createFileRoute("/api/services")({
           ids.add(s.id);
         }
         await writeServices(services);
-        return Response.json({ ok: true, count: services.length });
+        return Response.json({ ok: true, count: services.length }, { headers: cookieHeaders });
       },
     },
   },
