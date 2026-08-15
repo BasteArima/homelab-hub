@@ -20,6 +20,8 @@ import {
   ChevronDown,
   Command,
   LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
 import {
   fetchServices,
@@ -140,6 +142,7 @@ function Index() {
   const [density, setDensity] = useState<Density>("comfortable");
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const [activeGroup, setActiveGroup] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
 
   const uidRef = useRef(0);
   const nextUid = () => `u${uidRef.current++}`;
@@ -153,6 +156,22 @@ function Index() {
   useEffect(() => {
     checkSession().then(setAuthed);
   }, []);
+
+  // Sync theme state with the class the pre-hydration script applied.
+  useEffect(() => {
+    setTheme(document.documentElement.classList.contains("light") ? "light" : "dark");
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.classList.toggle("light", next === "light");
+    try {
+      localStorage.setItem("hub.theme", next);
+    } catch {
+      /* ignore */
+    }
+  };
 
   // Load persisted view prefs after mount (avoids SSR hydration mismatch).
   useEffect(() => {
@@ -557,26 +576,26 @@ function Index() {
             />
             <button
               onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-foreground hover:bg-white/5"
+              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
               <Upload className="h-3.5 w-3.5" /> Import
             </button>
             <button
               onClick={handleExport}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-foreground hover:bg-white/5"
+              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
               <Download className="h-3.5 w-3.5" /> Export
             </button>
             <button
               onClick={signOut}
               title="Sign out (forget this device)"
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-muted-foreground hover:bg-fill1 hover:text-foreground"
             >
               <LogOut className="h-3.5 w-3.5" /> Sign out
             </button>
             <button
               onClick={cancelEdit}
-              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs text-foreground hover:bg-white/5"
+              className="rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
               Cancel
             </button>
@@ -605,11 +624,19 @@ function Index() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{date}</p>
         </div>
-        <div className="flex items-center gap-4 sm:items-end">
+        <div className="flex items-center gap-2 sm:items-end">
+          <button
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Light theme" : "Dark theme"}
+            aria-label="Toggle theme"
+            className="rounded-xl border border-hairline bg-fill1 p-2.5 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           {!editMode && (
             <button
               onClick={requestEdit}
-              className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+              className="flex items-center gap-2 rounded-xl border border-hairline bg-fill1 px-3 py-2.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
               title={authed ? "Edit dashboard" : "Sign in to edit"}
             >
               <Pencil className="h-4 w-4" /> Edit
@@ -636,7 +663,7 @@ function Index() {
             <button
               onClick={() => setPaletteOpen(true)}
               title="Command palette (Ctrl/⌘ K)"
-              className="hidden items-center gap-1 rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary/40 hover:text-primary sm:flex"
+              className="hidden items-center gap-1 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary/40 hover:text-primary sm:flex"
             >
               <Command className="h-3 w-3" />K
             </button>
@@ -650,7 +677,7 @@ function Index() {
                   className={`rounded-full px-3 py-1 text-xs transition-colors ${
                     activeGroup === null
                       ? "bg-primary/15 text-primary"
-                      : "border border-white/10 text-muted-foreground hover:text-foreground"
+                      : "border border-hairline text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   All
@@ -662,14 +689,14 @@ function Index() {
                     className={`rounded-full px-3 py-1 text-xs transition-colors ${
                       activeGroup === g
                         ? "bg-primary/15 text-primary"
-                        : "border border-white/10 text-muted-foreground hover:text-foreground"
+                        : "border border-hairline text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {g}
                   </button>
                 ))}
               </div>
-              <div className="flex items-center gap-0.5 rounded-lg border border-white/10 p-0.5">
+              <div className="flex items-center gap-0.5 rounded-lg border border-hairline p-0.5">
                 {DENSITY_OPTIONS.map(({ value, label, Icon }) => (
                   <button
                     key={value}
@@ -678,7 +705,7 @@ function Index() {
                     aria-label={label}
                     className={`rounded-md p-1.5 transition-colors ${
                       density === value
-                        ? "bg-white/10 text-foreground"
+                        ? "bg-fill2 text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -724,7 +751,7 @@ function Index() {
                     <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
                       {group}
                     </h2>
-                    <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                    <div className="h-px flex-1 bg-gradient-to-r from-hairline to-transparent" />
                     <span className="text-[10px] text-muted-foreground/60">{items.length}</span>
                   </button>
                   {!isCollapsed && (
@@ -781,10 +808,10 @@ function Index() {
                   <input
                     value={group.name}
                     onChange={(e) => renameGroup(group.name, e.target.value)}
-                    className="min-w-0 rounded-md bg-transparent px-1 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none focus:bg-black/30 focus:text-foreground"
+                    className="min-w-0 rounded-md bg-transparent px-1 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none focus:bg-field focus:text-foreground"
                     title="Rename group"
                   />
-                  <div className="h-px flex-1 bg-gradient-to-r from-white/10 to-transparent" />
+                  <div className="h-px flex-1 bg-gradient-to-r from-hairline to-transparent" />
                   <span className="text-[10px] text-muted-foreground/60">{group.items.length}</span>
                   {group.items.length === 0 && (
                     <button
@@ -842,7 +869,7 @@ function Index() {
                   {/* Add-service tile */}
                   <button
                     onClick={() => addToGroup(group.name)}
-                    className="flex min-h-[8.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                    className="flex min-h-[8.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
                     title="Add service to this group"
                   >
                     <Plus className="h-7 w-7" />
@@ -855,7 +882,7 @@ function Index() {
 
           <button
             onClick={addGroup}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-white/15 py-4 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary"
+            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline py-4 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary"
           >
             <FolderPlus className="h-4 w-4" /> New group
           </button>
@@ -869,7 +896,7 @@ function Index() {
           onMouseDown={(e) => e.target === e.currentTarget && setLoginOpen(false)}
         >
           <div className="glass-card flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl p-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-white/10">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-hairline">
               <Lock className="h-6 w-6 text-primary" />
             </div>
             <p className="text-sm text-muted-foreground">
@@ -882,13 +909,13 @@ function Index() {
               onChange={(e) => setLoginPassword(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && loginPassword && !loginBusy && doLogin()}
               placeholder="Password"
-              className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
+              className="w-full rounded-lg border border-hairline bg-field px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
             />
             {loginError && <p className="text-xs text-rose-400">{loginError}</p>}
             <div className="flex w-full gap-2">
               <button
                 onClick={() => setLoginOpen(false)}
-                className="flex-1 rounded-lg border border-white/10 px-4 py-2 text-sm text-foreground hover:bg-white/5"
+                className="flex-1 rounded-lg border border-hairline px-4 py-2 text-sm text-foreground hover:bg-fill1"
               >
                 Cancel
               </button>

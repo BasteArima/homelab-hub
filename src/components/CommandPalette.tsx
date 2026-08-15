@@ -67,7 +67,7 @@ export function CommandPalette({ open, onClose, services }: Props) {
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="glass-card flex max-h-[70vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl">
-        <div className="flex items-center gap-2 border-b border-white/10 px-4">
+        <div className="flex items-center gap-2 border-b border-hairline px-4">
           <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
           <input
             autoFocus
@@ -77,7 +77,7 @@ export function CommandPalette({ open, onClose, services }: Props) {
             placeholder="Jump to a service…"
             className="h-12 w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
           />
-          <kbd className="rounded border border-white/10 px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          <kbd className="rounded border border-hairline px-1.5 py-0.5 text-[10px] text-muted-foreground">
             esc
           </kbd>
         </div>
@@ -91,7 +91,7 @@ export function CommandPalette({ open, onClose, services }: Props) {
                 data-active={i === active}
                 onMouseMove={() => setActive(i)}
                 onClick={() => openService(svc)}
-                className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-foreground data-[active=true]:bg-white/10"
+                className="group flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm text-foreground data-[active=true]:bg-fill2"
               >
                 <ItemIcon service={svc} />
                 <span className="min-w-0 flex-1 truncate font-medium">{svc.name || svc.id}</span>
@@ -112,7 +112,7 @@ function ItemIcon({ service }: { service: Service }) {
   const iconR = resolveIcon(service);
   if (iconR.kind === "logo" || iconR.kind === "url") {
     return (
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/5">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-fill1">
         <img src={iconR.src} alt="" className="h-4 w-4 object-contain" />
       </span>
     );
@@ -121,7 +121,7 @@ function ItemIcon({ service }: { service: Service }) {
     (Icons[iconR.name as keyof typeof Icons] as React.ComponentType<{ className?: string }>) ??
     Icons.Box;
   return (
-    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/5 text-primary">
+    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-fill1 text-primary">
       <Lucide className="h-4 w-4" />
     </span>
   );

@@ -71,17 +71,17 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center gap-2 rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-left text-xs text-foreground outline-none hover:border-primary/40 focus:border-primary/60"
+        className="flex w-full items-center gap-2 rounded-md border border-hairline bg-field px-2 py-1.5 text-left text-xs text-foreground outline-none hover:border-primary/40 focus:border-primary/60"
       >
-        <span className="flex h-6 w-6 items-center justify-center rounded bg-white/5">
+        <span className="flex h-6 w-6 items-center justify-center rounded bg-fill1">
           <TriggerIcon value={value} autoSlug={autoSlug} />
         </span>
         <span className="truncate">{labelFor(value, autoSlug)}</span>
       </button>
 
       {open && (
-        <div className="absolute z-10 mt-2 w-72 rounded-xl border border-white/10 bg-[oklch(0.2_0.025_265)] p-2 shadow-2xl">
-          <div className="mb-2 flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-2 py-1.5">
+        <div className="absolute z-10 mt-2 w-72 rounded-xl border border-hairline bg-popbg p-2 shadow-2xl">
+          <div className="mb-2 flex items-center gap-2 rounded-lg border border-hairline bg-field px-2 py-1.5">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
               autoFocus
@@ -106,7 +106,7 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
             className={`mb-2 flex w-full items-center gap-1.5 rounded-md border px-2 py-1.5 text-left text-[11px] ${
               value === ""
                 ? "border-primary/60 text-foreground"
-                : "border-white/10 text-muted-foreground hover:text-foreground"
+                : "border-hairline text-muted-foreground hover:text-foreground"
             }`}
           >
             <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -131,7 +131,7 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
                         className={`flex h-9 items-center justify-center rounded-lg border transition-colors ${
                           active
                             ? "border-primary/60 bg-primary/10"
-                            : "border-transparent hover:border-white/10 hover:bg-white/5"
+                            : "border-transparent hover:border-hairline hover:bg-fill1"
                         }`}
                       >
                         <img src={logoUrl(slug)} alt="" className="h-5 w-5 object-contain" />
@@ -158,7 +158,7 @@ export function IconPicker({ value, onChange, autoSlug }: Props) {
                     className={`flex h-9 items-center justify-center rounded-lg border transition-colors ${
                       active
                         ? "border-primary/60 bg-primary/10 text-primary"
-                        : "border-transparent text-foreground hover:border-white/10 hover:bg-white/5"
+                        : "border-transparent text-foreground hover:border-hairline hover:bg-fill1"
                     }`}
                   >
                     <Cmp className="h-4 w-4" />

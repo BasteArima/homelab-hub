@@ -82,7 +82,7 @@ export function ServiceCard({
   const tile = (box: string, media: string) =>
     showLogo ? (
       <div
-        className={`flex ${box} shrink-0 items-center justify-center rounded-xl bg-white/5 ring-1 ring-white/10`}
+        className={`flex ${box} shrink-0 items-center justify-center rounded-xl bg-fill1 ring-1 ring-hairline`}
       >
         <img
           src={iconR.src}
@@ -183,7 +183,7 @@ export function ServiceCard({
           <X className="h-3.5 w-3.5" />
         </button>
         {(onMoveUp || onMoveDown) && (
-          <div className="absolute -bottom-2 left-1/2 z-10 flex -translate-x-1/2 overflow-hidden rounded-full border border-white/15 bg-[oklch(0.2_0.025_265)] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
+          <div className="absolute -bottom-2 left-1/2 z-10 flex -translate-x-1/2 overflow-hidden rounded-full border border-hairline bg-popbg opacity-0 shadow-lg transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -192,7 +192,7 @@ export function ServiceCard({
               disabled={!onMoveUp}
               title="Move up"
               aria-label="Move up"
-              className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex h-7 w-7 items-center justify-center text-muted-foreground hover:bg-fill2 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <ChevronUp className="h-4 w-4" />
             </button>
@@ -204,7 +204,7 @@ export function ServiceCard({
               disabled={!onMoveDown}
               title="Move down"
               aria-label="Move down"
-              className="flex h-7 w-7 items-center justify-center border-l border-white/10 text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex h-7 w-7 items-center justify-center border-l border-hairline text-muted-foreground hover:bg-fill2 hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <ChevronDown className="h-4 w-4" />
             </button>

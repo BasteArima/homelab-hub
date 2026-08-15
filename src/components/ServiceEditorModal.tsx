@@ -45,13 +45,13 @@ export function ServiceEditorModal({
       onMouseDown={(e) => e.target === e.currentTarget && onClose()}
     >
       <div className="glass-card flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl">
-        <header className="flex items-center justify-between border-b border-white/10 px-5 py-3">
+        <header className="flex items-center justify-between border-b border-hairline px-5 py-3">
           <h2 className="text-sm font-semibold text-foreground">
             {isNew ? "New service" : `Edit · ${service.name || service.id || "service"}`}
           </h2>
           <button
             onClick={onClose}
-            className="rounded-md p-1 text-muted-foreground hover:bg-white/5 hover:text-foreground"
+            className="rounded-md p-1 text-muted-foreground hover:bg-fill1 hover:text-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -149,7 +149,7 @@ export function ServiceEditorModal({
           </div>
 
           {/* Live URL preview */}
-          <div className="space-y-1.5 rounded-xl border border-white/10 bg-black/20 p-3">
+          <div className="space-y-1.5 rounded-xl border border-hairline bg-field p-3">
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70">Opens</p>
             <div className="flex items-center gap-2 text-xs">
               <Wifi className="h-3 w-3 shrink-0 text-emerald-400/80" />
@@ -162,7 +162,7 @@ export function ServiceEditorModal({
           </div>
         </div>
 
-        <footer className="flex items-center justify-between gap-2 border-t border-white/10 px-5 py-3">
+        <footer className="flex items-center justify-between gap-2 border-t border-hairline px-5 py-3">
           <button
             onClick={onDelete}
             className="flex items-center gap-1.5 rounded-lg border border-rose-500/30 px-3 py-1.5 text-xs text-rose-400 hover:bg-rose-500/10"
@@ -172,7 +172,7 @@ export function ServiceEditorModal({
           <div className="flex gap-2">
             <button
               onClick={onDuplicate}
-              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-1.5 text-xs text-foreground hover:bg-white/5"
+              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
             >
               <Copy className="h-3.5 w-3.5" /> Duplicate
             </button>
@@ -196,7 +196,7 @@ function ProtoSelect({ value, onChange }: { value: Protocol; onChange: (v: Proto
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as Protocol)}
-        className="rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
+        className="rounded-md border border-hairline bg-field px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
       >
         <option value="http">http</option>
         <option value="https">https</option>
@@ -228,7 +228,7 @@ function ColorField({
           className={`flex items-center gap-1.5 rounded-md border px-2 py-1 text-[11px] ${
             isAuto
               ? "border-primary/60 text-foreground"
-              : "border-white/10 text-muted-foreground hover:text-foreground"
+              : "border-hairline text-muted-foreground hover:text-foreground"
           }`}
         >
           <span className="h-3 w-3 rounded-full" style={{ background: auto.fg }} />
@@ -301,7 +301,7 @@ function GroupField({
           onChange={(e) => onChange(e.target.value)}
           onFocus={() => setOpen(true)}
           placeholder="Choose or type…"
-          className="w-full rounded-md border border-white/10 bg-black/30 py-1.5 pl-2 pr-7 text-xs text-foreground outline-none focus:border-primary/60"
+          className="w-full rounded-md border border-hairline bg-field py-1.5 pl-2 pr-7 text-xs text-foreground outline-none focus:border-primary/60"
         />
         <button
           type="button"
@@ -314,12 +314,12 @@ function GroupField({
       </div>
 
       {open && (matches.length > 0 || isNew) && (
-        <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-white/10 bg-[oklch(0.2_0.025_265)] p-1 shadow-2xl">
+        <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-hairline bg-popbg p-1 shadow-2xl">
           {isNew && (
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-primary hover:bg-white/5"
+              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-primary hover:bg-fill1"
             >
               <Plus className="h-3.5 w-3.5 shrink-0" />
               Create “{value.trim()}”
@@ -333,7 +333,7 @@ function GroupField({
                 onChange(g);
                 setOpen(false);
               }}
-              className={`flex w-full items-center rounded-md px-2 py-1.5 text-left text-xs hover:bg-white/5 ${
+              className={`flex w-full items-center rounded-md px-2 py-1.5 text-left text-xs hover:bg-fill1 ${
                 g.toLowerCase() === q ? "text-primary" : "text-foreground"
               }`}
             >
@@ -371,7 +371,7 @@ function Field({
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
+        className="w-full rounded-md border border-hairline bg-field px-2 py-1.5 text-xs text-foreground outline-none focus:border-primary/60"
       />
     </label>
   );
