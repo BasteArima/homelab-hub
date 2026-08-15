@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { readServices, writeServices, getAdminPassword } from "@/lib/services-data.server";
 import { isAuthed, sessionSetCookie } from "@/lib/session.server";
+import { isLocked } from "@/lib/private.server";
 import type { Service } from "@/lib/services-config";
 
 function isValidService(s: unknown): s is Service {
@@ -43,7 +44,11 @@ function isValidService(s: unknown): s is Service {
 export const Route = createFileRoute("/api/services")({
   server: {
     handlers: {
-      GET: async () => {
+      GET: async ({ request }) => {
+        // In private mode, external unauthenticated visitors get nothing.
+        if (await isLocked(request)) {
+          return Response.json([], { headers: { "Cache-Control": "no-store" } });
+        }
         const services = await readServices();
         return Response.json(services, {
           headers: { "Cache-Control": "no-store" },

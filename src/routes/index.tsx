@@ -119,6 +119,7 @@ function Index() {
   // Edit mode
   const [editMode, setEditMode] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [locked, setLocked] = useState(false);
   const [draft, setDraft] = useState<Draft[]>([]);
   const [emptyGroups, setEmptyGroups] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -152,9 +153,12 @@ function Index() {
     setHost(window.location.hostname);
   }, []);
 
-  // Restore an existing admin session so Edit doesn't re-prompt for the password.
+  // Restore session + private-mode lock state.
   useEffect(() => {
-    checkSession().then(setAuthed);
+    checkSession().then(({ authed, locked }) => {
+      setAuthed(authed);
+      setLocked(locked);
+    });
   }, []);
 
   // Sync theme state with the class the pre-hydration script applied.
@@ -307,6 +311,29 @@ function Index() {
       setLoginOpen(false);
       setAuthed(true);
       startEditing();
+    } catch {
+      setLoginError("Network error — try again");
+    } finally {
+      setLoginBusy(false);
+    }
+  };
+
+  // Private-mode gate: unlock the site (also signs in, so Edit won't re-prompt).
+  const doUnlock = async () => {
+    setLoginBusy(true);
+    setLoginError(null);
+    try {
+      const ok = await verifyPassword(loginPassword);
+      if (!ok) {
+        setLoginError("Invalid password");
+        return;
+      }
+      setLoginPassword("");
+      setAuthed(true);
+      setLocked(false);
+      fetchServices()
+        .then((s) => setServices(s))
+        .catch((e) => setLoadError(e.message));
     } catch {
       setLoginError("Network error — try again");
     } finally {
@@ -548,11 +575,44 @@ function Index() {
     editorAutoColor = assignGroupColors(inputs)[idx] ?? null;
   }
 
+  // Private mode: external visitors see only a password gate.
+  if (locked && !authed) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <div className="glass-card flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl p-8">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-hairline">
+            <Lock className="h-6 w-6 text-primary" />
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            This dashboard is private. Enter the admin password to continue.
+          </p>
+          <input
+            autoFocus
+            type="password"
+            value={loginPassword}
+            onChange={(e) => setLoginPassword(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && loginPassword && !loginBusy && doUnlock()}
+            placeholder="Password"
+            className="w-full rounded-lg border border-hairline bg-field px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
+          />
+          {loginError && <p className="text-xs text-rose-400">{loginError}</p>}
+          <button
+            disabled={!loginPassword || loginBusy}
+            onClick={doUnlock}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+          >
+            {loginBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Unlock"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Sticky edit toolbar */}
       {editMode && (
-        <div className="sticky top-0 z-30 -mx-4 mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-primary/20 bg-[oklch(0.16_0.02_265)]/85 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <div className="sticky top-0 z-30 -mx-4 mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-primary/20 bg-background/85 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <Pencil className="h-4 w-4 text-primary" />
             Editing

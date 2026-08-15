@@ -56,15 +56,15 @@ export async function saveServices(services: Service[], adminPassword?: string):
   if (!res.ok) throw new Error(`Save failed: ${res.status} ${await res.text()}`);
 }
 
-/** Whether this browser already holds a valid admin session cookie. */
-export async function checkSession(): Promise<boolean> {
+/** Admin auth + private-mode lock state for this browser. */
+export async function checkSession(): Promise<{ authed: boolean; locked: boolean }> {
   try {
     const res = await fetch("/api/session", { cache: "no-store" });
-    if (!res.ok) return false;
-    const data = (await res.json()) as { authed?: boolean };
-    return !!data.authed;
+    if (!res.ok) return { authed: false, locked: false };
+    const data = (await res.json()) as { authed?: boolean; locked?: boolean };
+    return { authed: !!data.authed, locked: !!data.locked };
   } catch {
-    return false;
+    return { authed: false, locked: false };
   }
 }
 

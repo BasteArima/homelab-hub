@@ -22,6 +22,9 @@ services:
       - DATA_DIR=/app/data
       # Set this in Portainer / your .env. Defaults to "admin123" if unset.
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      # Private mode: when true, visitors on the PUBLIC domain see only a
+      # password gate until they sign in. Local (LAN) access is never gated.
+      - PRIVATE_MODE=${PRIVATE_MODE:-false}
     volumes:
       # Persist services.json across container updates.
       - homelab-data:/app/data
