@@ -33,3 +33,7 @@ dist-ssr
 
 # Brand logos: fetched at build (scripts/fetch-logos.mjs); manifest is committed
 public/logos/
+
+# Real service list used as a local test fixture. Never committed: this repo is
+# public and the export carries LAN topology, VPS IPs and secret URL paths.
+data/*.fixture.json
