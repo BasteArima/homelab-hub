@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ApiSessionRouteImport } from './routes/api/session'
 import { Route as ApiServicesRouteImport } from './routes/api/services'
+import { Route as ApiPingRouteImport } from './routes/api/ping'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,33 +29,42 @@ const ApiServicesRoute = ApiServicesRouteImport.update({
   path: '/api/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPingRoute = ApiPingRouteImport.update({
+  id: '/api/ping',
+  path: '/api/ping',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/ping': typeof ApiPingRoute
   '/api/services': typeof ApiServicesRoute
   '/api/session': typeof ApiSessionRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/ping': typeof ApiPingRoute
   '/api/services': typeof ApiServicesRoute
   '/api/session': typeof ApiSessionRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/ping': typeof ApiPingRoute
   '/api/services': typeof ApiServicesRoute
   '/api/session': typeof ApiSessionRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/api/services' | '/api/session'
+  fullPaths: '/' | '/api/ping' | '/api/services' | '/api/session'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/api/services' | '/api/session'
-  id: '__root__' | '/' | '/api/services' | '/api/session'
+  to: '/' | '/api/ping' | '/api/services' | '/api/session'
+  id: '__root__' | '/' | '/api/ping' | '/api/services' | '/api/session'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPingRoute: typeof ApiPingRoute
   ApiServicesRoute: typeof ApiServicesRoute
   ApiSessionRoute: typeof ApiSessionRoute
 }
@@ -82,11 +92,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ping': {
+      id: '/api/ping'
+      path: '/api/ping'
+      fullPath: '/api/ping'
+      preLoaderRoute: typeof ApiPingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPingRoute: ApiPingRoute,
   ApiServicesRoute: ApiServicesRoute,
   ApiSessionRoute: ApiSessionRoute,
 }

@@ -126,33 +126,8 @@ export function previewUrls(svc: Service): { local: string; remote: string } {
   };
 }
 
-/**
- * Reachability check. Pings the SAME origin the card links to (context-aware:
- * LAN IP:port locally, domain remotely, with each context's protocol/port), so
- * the status reflects what the user actually reaches instead of always probing
- * `https://<domain>`. `no-cors` means we only learn whether *something* answered
- * — not the HTTP status — which is the best a browser can do cross-origin.
- */
-export async function pingService(
-  baseUrl: string,
-  timeoutMs = 5000,
-): Promise<{ online: boolean; rtt: number | null }> {
-  let url: string;
-  try {
-    const u = new URL(baseUrl);
-    url = `${u.origin}/favicon.ico?_=${Date.now()}`;
-  } catch {
-    url = baseUrl;
-  }
-  const start = performance.now();
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    await fetch(url, { mode: "no-cors", cache: "no-store", signal: controller.signal });
-    clearTimeout(timer);
-    return { online: true, rtt: Math.round(performance.now() - start) };
-  } catch {
-    clearTimeout(timer);
-    return { online: false, rtt: null };
-  }
-}
+// Health checks live on the server (see lib/ping.server.ts, /api/ping): a
+// browser probe cannot work here — it is blocked as mixed content when the hub
+// is served over https, cannot reach private addresses from outside the LAN,
+// and `no-cors` hides the HTTP status so a proxy answering 502 for a dead
+// backend looks identical to a healthy service.

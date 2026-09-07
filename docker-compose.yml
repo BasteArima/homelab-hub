@@ -25,6 +25,14 @@ services:
       # Private mode: when true, visitors on the PUBLIC domain see only a
       # password gate until they sign in. Local (LAN) access is never gated.
       - PRIVATE_MODE=${PRIVATE_MODE:-false}
+      # LAN address of THIS machine. Health checks use it for services whose
+      # "Local host" is blank (meaning "same box as the hub") — inside the
+      # container `localhost` is the container itself, not the host.
+      # Falls back to host.docker.internal when unset.
+      - LAN_HOST=${LAN_HOST:-}
+    extra_hosts:
+      # Makes host.docker.internal resolve on Linux (the LAN_HOST fallback).
+      - "host.docker.internal:host-gateway"
     volumes:
       # Persist services.json across container updates.
       - homelab-data:/app/data

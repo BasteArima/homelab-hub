@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import * as Icons from "lucide-react";
 import { ExternalLink, Pencil, X, ChevronUp, ChevronDown } from "lucide-react";
-import { pingService, resolveServiceUrl, type Service } from "@/lib/services-config";
+import { resolveServiceUrl, type Service } from "@/lib/services-config";
 import { resolveServiceColor, type ResolvedColor } from "@/lib/service-colors";
 import { resolveIcon } from "@/lib/logos";
 import { useI18n } from "@/lib/i18n";
+import { useServiceStatus } from "@/lib/status";
 
 export type Density = "comfortable" | "compact" | "list";
 
@@ -44,32 +45,12 @@ export function ServiceCard({
   onDragEnd,
 }: Props) {
   const { t } = useI18n();
-  const [status, setStatus] = useState<{ online: boolean; rtt: number | null } | null>(null);
-  const [loading, setLoading] = useState(service.isVps);
   const [imgError, setImgError] = useState(false);
 
   useEffect(() => setImgError(false), [service.icon]);
 
-  // Ping the same origin the card links to (LAN vs remote aware).
-  const pingTarget = resolveServiceUrl(service);
-  useEffect(() => {
-    if (!service.isVps || editing) return;
-    let mounted = true;
-    const run = async () => {
-      setLoading(true);
-      const r = await pingService(pingTarget);
-      if (mounted) {
-        setStatus(r);
-        setLoading(false);
-      }
-    };
-    run();
-    const interval = setInterval(run, 60000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
-  }, [pingTarget, service.isVps, editing]);
+  // Health comes from the server-side check, shared across all cards.
+  const { result: status, loading } = useServiceStatus(service.id);
 
   const iconR = resolveIcon(service);
   const showLogo = (iconR.kind === "logo" || iconR.kind === "url") && !imgError;
@@ -108,7 +89,15 @@ export function ServiceCard({
     service.isVps && !editing ? (
       <div
         className="flex shrink-0 items-center gap-1.5"
-        title={status ? (status.online ? `${status.rtt}ms` : t("offline")) : t("checking")}
+        title={
+          loading
+            ? t("checking")
+            : status
+              ? `${status.online ? `${status.rtt}ms` : t("offline")}${
+                  status.status ? ` · HTTP ${status.status}` : ""
+                }`
+              : t("offline")
+        }
       >
         {loading ? (
           <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-400/90" />

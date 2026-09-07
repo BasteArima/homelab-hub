@@ -35,6 +35,7 @@ import {
 import { assignGroupColors } from "@/lib/service-colors";
 import { useI18n } from "@/lib/i18n";
 import { ServiceCard, type Density } from "@/components/ServiceCard";
+import { StatusProvider } from "@/lib/status";
 import { ServiceEditorModal } from "@/components/ServiceEditorModal";
 import { CommandPalette } from "@/components/CommandPalette";
 
@@ -610,411 +611,415 @@ function Index() {
   }
 
   return (
-    <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Sticky edit toolbar */}
-      {editMode && (
-        <div className="sticky top-0 z-30 -mx-4 mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-primary/20 bg-background/85 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-            <Pencil className="h-4 w-4 text-primary" />
-            {t("editing")}
-            {dirty && (
-              <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-300">
-                {t("unsaved_changes")}
-              </span>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/json,.json"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleImportFile(f);
-                e.target.value = "";
-              }}
-            />
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
-            >
-              <Upload className="h-3.5 w-3.5" /> {t("import")}
-            </button>
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
-            >
-              <Download className="h-3.5 w-3.5" /> {t("export")}
-            </button>
-            <button
-              onClick={signOut}
-              title={t("sign_out_title")}
-              className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-muted-foreground hover:bg-fill1 hover:text-foreground"
-            >
-              <LogOut className="h-3.5 w-3.5" /> {t("sign_out")}
-            </button>
-            <button
-              onClick={cancelEdit}
-              className="rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
-            >
-              {t("cancel")}
-            </button>
-            <button
-              onClick={saveEdit}
-              disabled={saving}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
-              <Save className="h-3.5 w-3.5" />
-              {saving ? t("saving") : t("save")}
-            </button>
-          </div>
-        </div>
-      )}
-
-      <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            {isLocal ? <Wifi className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
-            <span>{isLocal ? t("local_network") : t("remote_access")}</span>
-            <span className="text-muted-foreground/50">•</span>
-            <span className="font-mono">{host || "—"}</span>
-          </div>
-          <h1 className="mt-2 bg-gradient-to-r from-primary via-foreground to-accent bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
-            Homelab Hub
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{date}</p>
-        </div>
-        <div className="flex items-center gap-2 sm:items-end">
-          <button
-            onClick={() => setLang(lang === "en" ? "ru" : "en")}
-            title={lang === "en" ? "Русский" : "English"}
-            aria-label="Language"
-            className="rounded-xl border border-hairline bg-fill1 px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-          >
-            {lang.toUpperCase()}
-          </button>
-          <button
-            onClick={toggleTheme}
-            title={theme === "dark" ? t("light_theme") : t("dark_theme")}
-            aria-label="Toggle theme"
-            className="rounded-xl border border-hairline bg-fill1 p-2.5 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
-          {!editMode && (
-            <button
-              onClick={requestEdit}
-              className="flex items-center gap-2 rounded-xl border border-hairline bg-fill1 px-3 py-2.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-              title={authed ? t("edit_dashboard") : t("signin_to_edit")}
-            >
-              <Pencil className="h-4 w-4" /> {t("edit")}
-            </button>
-          )}
-          <div className="text-right">
-            <div className="font-mono text-4xl font-light tabular-nums text-foreground sm:text-5xl">
-              {time}
+    <StatusProvider enabled={!editMode}>
+      <main className="mx-auto min-h-screen max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        {/* Sticky edit toolbar */}
+        {editMode && (
+          <div className="sticky top-0 z-30 -mx-4 mb-8 flex flex-wrap items-center justify-between gap-3 border-b border-primary/20 bg-background/85 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Pencil className="h-4 w-4 text-primary" />
+              {t("editing")}
+              {dirty && (
+                <span className="rounded-full bg-amber-400/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-300">
+                  {t("unsaved_changes")}
+                </span>
+              )}
             </div>
-          </div>
-        </div>
-      </header>
-
-      {!editMode && (
-        <div className="mb-8 space-y-3">
-          <div className="glass-card flex items-center gap-3 rounded-2xl px-4 py-3">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t("search_services")}
-              className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
-            />
-            <button
-              onClick={() => setPaletteOpen(true)}
-              title={t("command_palette")}
-              className="hidden items-center gap-1 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary/40 hover:text-primary sm:flex"
-            >
-              <Command className="h-3 w-3" />K
-            </button>
-          </div>
-
-          {!loading && !loadError && services.length > 0 && (
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <button
-                  onClick={() => setActiveGroup(null)}
-                  className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                    activeGroup === null
-                      ? "bg-primary/15 text-primary"
-                      : "border border-hairline text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {t("all")}
-                </button>
-                {allGroupNames.map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setActiveGroup((cur) => (cur === g ? null : g))}
-                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
-                      activeGroup === g
-                        ? "bg-primary/15 text-primary"
-                        : "border border-hairline text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    {g}
-                  </button>
-                ))}
-              </div>
-              <div className="flex items-center gap-0.5 rounded-lg border border-hairline p-0.5">
-                {DENSITY_OPTIONS.map(({ value, Icon }) => (
-                  <button
-                    key={value}
-                    onClick={() => applyDensity(value)}
-                    title={t(value)}
-                    aria-label={t(value)}
-                    className={`rounded-md p-1.5 transition-colors ${
-                      density === value
-                        ? "bg-fill2 text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Display mode ─────────────────────────────────────────── */}
-      {!editMode && (
-        <div className="space-y-10 pb-16">
-          {loading && (
-            <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
-              <Loader2 className="h-4 w-4 animate-spin" /> {t("loading_services")}
-            </div>
-          )}
-          {loadError && !loading && (
-            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
-              {t("failed_load", { msg: loadError })}
-            </div>
-          )}
-          {displayGrouped.entries
-            .filter(([group]) => !activeGroup || group === activeGroup)
-            .map(([group, items]) => {
-              const colors = assignGroupColors(items);
-              const isCollapsed = collapsed.has(group);
-              return (
-                <section key={group}>
-                  <button
-                    onClick={() => toggleCollapse(group)}
-                    className="mb-4 flex w-full items-center gap-3 text-left"
-                    title={isCollapsed ? t("expand") : t("collapse")}
-                  >
-                    <ChevronDown
-                      className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
-                        isCollapsed ? "-rotate-90" : ""
-                      }`}
-                    />
-                    <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                      {group}
-                    </h2>
-                    <div className="h-px flex-1 bg-gradient-to-r from-hairline to-transparent" />
-                    <span className="text-[10px] text-muted-foreground/60">{items.length}</span>
-                  </button>
-                  {!isCollapsed && (
-                    <div className={GRID_CLASS[density]}>
-                      {items.map((s, i) => (
-                        <ServiceCard key={s.id} service={s} color={colors[i]} density={density} />
-                      ))}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
-          {!loading && !loadError && displayGrouped.entries.length === 0 && (
-            <div className="py-20 text-center text-sm text-muted-foreground">
-              {services.length === 0 ? t("no_services_yet") : t("no_match", { q: query })}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Edit mode ────────────────────────────────────────────── */}
-      {editMode && (
-        <div className="space-y-10 pb-16">
-          {editGroups.map((group) => {
-            const colors = assignGroupColors(group.items.map((it) => it.svc));
-            return (
-              <section
-                key={group.name}
-                onDragOver={(e) => {
-                  if (dragUid === null) return;
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "move";
-                  setDropTarget((cur) =>
-                    cur && cur.group === group.name && cur.beforeUid === null
-                      ? cur
-                      : { group: group.name, beforeUid: null },
-                  );
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleImportFile(f);
+                  e.target.value = "";
                 }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  if (dragUid !== null && dropTarget)
-                    moveDraft(dragUid, dropTarget.group, dropTarget.beforeUid);
-                  finishDrag();
-                }}
-                className={`rounded-2xl border p-3 transition-colors ${
-                  dragUid !== null && dropTarget?.group === group.name
-                    ? "border-primary/40 bg-primary/[0.03]"
-                    : "border-transparent"
-                }`}
-              >
-                <div className="mb-4 flex items-center gap-3">
-                  <input
-                    value={group.name}
-                    onChange={(e) => renameGroup(group.name, e.target.value)}
-                    className="min-w-0 rounded-md bg-transparent px-1 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none focus:bg-field focus:text-foreground"
-                    title={t("rename_group")}
-                  />
-                  <div className="h-px flex-1 bg-gradient-to-r from-hairline to-transparent" />
-                  <span className="text-[10px] text-muted-foreground/60">{group.items.length}</span>
-                  {group.items.length === 0 && (
-                    <button
-                      onClick={() => removeEmptyGroup(group.name)}
-                      className="rounded-md p-1 text-rose-400/70 hover:bg-rose-500/10 hover:text-rose-400"
-                      title={t("remove_empty_group")}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
-                  {group.items.map((it, i) => (
-                    <ServiceCard
-                      key={it.uid}
-                      service={it.svc}
-                      color={colors[i]}
-                      editing
-                      onEdit={() => setEditorUid(it.uid)}
-                      onDelete={() => removeDraft(it.uid)}
-                      onMoveUp={i > 0 ? () => moveWithinGroup(it.uid, -1) : undefined}
-                      onMoveDown={
-                        i < group.items.length - 1 ? () => moveWithinGroup(it.uid, 1) : undefined
-                      }
-                      isDragging={dragUid === it.uid}
-                      showDropIndicator={
-                        dragUid !== null &&
-                        dropTarget?.group === group.name &&
-                        dropTarget.beforeUid === it.uid
-                      }
-                      onDragStart={(e) => {
-                        setDragUid(it.uid);
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                      onDragOver={(e) => {
-                        if (dragUid === null) return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        e.dataTransfer.dropEffect = "move";
-                        setDropTarget((cur) =>
-                          cur && cur.group === group.name && cur.beforeUid === it.uid
-                            ? cur
-                            : { group: group.name, beforeUid: it.uid },
-                        );
-                      }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (dragUid !== null) moveDraft(dragUid, group.name, it.uid);
-                        finishDrag();
-                      }}
-                      onDragEnd={finishDrag}
-                    />
-                  ))}
-                  {/* Add-service tile */}
-                  <button
-                    onClick={() => addToGroup(group.name)}
-                    className="flex min-h-[8.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
-                    title={t("add_service_group")}
-                  >
-                    <Plus className="h-7 w-7" />
-                    <span className="text-xs">{t("add")}</span>
-                  </button>
-                </div>
-              </section>
-            );
-          })}
-
-          <button
-            onClick={addGroup}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline py-4 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary"
-          >
-            <FolderPlus className="h-4 w-4" /> {t("new_group")}
-          </button>
-        </div>
-      )}
-
-      {/* Login modal */}
-      {loginOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onMouseDown={(e) => e.target === e.currentTarget && setLoginOpen(false)}
-        >
-          <div className="glass-card flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl p-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-hairline">
-              <Lock className="h-6 w-6 text-primary" />
-            </div>
-            <p className="text-sm text-muted-foreground">{t("enter_password_edit")}</p>
-            <input
-              autoFocus
-              type="password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && loginPassword && !loginBusy && doLogin()}
-              placeholder={t("password")}
-              className="w-full rounded-lg border border-hairline bg-field px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
-            />
-            {loginError && <p className="text-xs text-rose-400">{loginError}</p>}
-            <div className="flex w-full gap-2">
+              />
               <button
-                onClick={() => setLoginOpen(false)}
-                className="flex-1 rounded-lg border border-hairline px-4 py-2 text-sm text-foreground hover:bg-fill1"
+                onClick={() => fileRef.current?.click()}
+                className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
+              >
+                <Upload className="h-3.5 w-3.5" /> {t("import")}
+              </button>
+              <button
+                onClick={handleExport}
+                className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
+              >
+                <Download className="h-3.5 w-3.5" /> {t("export")}
+              </button>
+              <button
+                onClick={signOut}
+                title={t("sign_out_title")}
+                className="flex items-center gap-1.5 rounded-lg border border-hairline px-3 py-1.5 text-xs text-muted-foreground hover:bg-fill1 hover:text-foreground"
+              >
+                <LogOut className="h-3.5 w-3.5" /> {t("sign_out")}
+              </button>
+              <button
+                onClick={cancelEdit}
+                className="rounded-lg border border-hairline px-3 py-1.5 text-xs text-foreground hover:bg-fill1"
               >
                 {t("cancel")}
               </button>
               <button
-                disabled={!loginPassword || loginBusy}
-                onClick={doLogin}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                onClick={saveEdit}
+                disabled={saving}
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
               >
-                {loginBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("continue")}
+                <Save className="h-3.5 w-3.5" />
+                {saving ? t("saving") : t("save")}
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Per-service editor */}
-      {editorItem && (
-        <ServiceEditorModal
-          service={editorItem.svc}
-          isNew={newUids.has(editorItem.uid)}
-          existingGroups={groupNames}
-          autoColor={editorAutoColor}
-          onChange={(svc) => updateDraft(editorItem.uid, svc)}
-          onDuplicate={() => duplicateDraft(editorItem.uid)}
-          onDelete={() => removeDraft(editorItem.uid)}
-          onClose={closeEditor}
+        <header className="mb-10 flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              {isLocal ? <Wifi className="h-3 w-3" /> : <Globe className="h-3 w-3" />}
+              <span>{isLocal ? t("local_network") : t("remote_access")}</span>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="font-mono">{host || "—"}</span>
+            </div>
+            <h1 className="mt-2 bg-gradient-to-r from-primary via-foreground to-accent bg-clip-text text-4xl font-bold tracking-tight text-transparent sm:text-5xl">
+              Homelab Hub
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">{date}</p>
+          </div>
+          <div className="flex items-center gap-2 sm:items-end">
+            <button
+              onClick={() => setLang(lang === "en" ? "ru" : "en")}
+              title={lang === "en" ? "Русский" : "English"}
+              aria-label="Language"
+              className="rounded-xl border border-hairline bg-fill1 px-3 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              {lang.toUpperCase()}
+            </button>
+            <button
+              onClick={toggleTheme}
+              title={theme === "dark" ? t("light_theme") : t("dark_theme")}
+              aria-label="Toggle theme"
+              className="rounded-xl border border-hairline bg-fill1 p-2.5 text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+            >
+              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </button>
+            {!editMode && (
+              <button
+                onClick={requestEdit}
+                className="flex items-center gap-2 rounded-xl border border-hairline bg-fill1 px-3 py-2.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                title={authed ? t("edit_dashboard") : t("signin_to_edit")}
+              >
+                <Pencil className="h-4 w-4" /> {t("edit")}
+              </button>
+            )}
+            <div className="text-right">
+              <div className="font-mono text-4xl font-light tabular-nums text-foreground sm:text-5xl">
+                {time}
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {!editMode && (
+          <div className="mb-8 space-y-3">
+            <div className="glass-card flex items-center gap-3 rounded-2xl px-4 py-3">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder={t("search_services")}
+                className="w-full bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+              />
+              <button
+                onClick={() => setPaletteOpen(true)}
+                title={t("command_palette")}
+                className="hidden items-center gap-1 rounded border border-hairline px-1.5 py-0.5 text-[10px] text-muted-foreground hover:border-primary/40 hover:text-primary sm:flex"
+              >
+                <Command className="h-3 w-3" />K
+              </button>
+            </div>
+
+            {!loading && !loadError && services.length > 0 && (
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    onClick={() => setActiveGroup(null)}
+                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                      activeGroup === null
+                        ? "bg-primary/15 text-primary"
+                        : "border border-hairline text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {t("all")}
+                  </button>
+                  {allGroupNames.map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setActiveGroup((cur) => (cur === g ? null : g))}
+                      className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                        activeGroup === g
+                          ? "bg-primary/15 text-primary"
+                          : "border border-hairline text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-0.5 rounded-lg border border-hairline p-0.5">
+                  {DENSITY_OPTIONS.map(({ value, Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => applyDensity(value)}
+                      title={t(value)}
+                      aria-label={t(value)}
+                      className={`rounded-md p-1.5 transition-colors ${
+                        density === value
+                          ? "bg-fill2 text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Display mode ─────────────────────────────────────────── */}
+        {!editMode && (
+          <div className="space-y-10 pb-16">
+            {loading && (
+              <div className="flex items-center justify-center gap-2 py-20 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> {t("loading_services")}
+              </div>
+            )}
+            {loadError && !loading && (
+              <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
+                {t("failed_load", { msg: loadError })}
+              </div>
+            )}
+            {displayGrouped.entries
+              .filter(([group]) => !activeGroup || group === activeGroup)
+              .map(([group, items]) => {
+                const colors = assignGroupColors(items);
+                const isCollapsed = collapsed.has(group);
+                return (
+                  <section key={group}>
+                    <button
+                      onClick={() => toggleCollapse(group)}
+                      className="mb-4 flex w-full items-center gap-3 text-left"
+                      title={isCollapsed ? t("expand") : t("collapse")}
+                    >
+                      <ChevronDown
+                        className={`h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform ${
+                          isCollapsed ? "-rotate-90" : ""
+                        }`}
+                      />
+                      <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                        {group}
+                      </h2>
+                      <div className="h-px flex-1 bg-gradient-to-r from-hairline to-transparent" />
+                      <span className="text-[10px] text-muted-foreground/60">{items.length}</span>
+                    </button>
+                    {!isCollapsed && (
+                      <div className={GRID_CLASS[density]}>
+                        {items.map((s, i) => (
+                          <ServiceCard key={s.id} service={s} color={colors[i]} density={density} />
+                        ))}
+                      </div>
+                    )}
+                  </section>
+                );
+              })}
+            {!loading && !loadError && displayGrouped.entries.length === 0 && (
+              <div className="py-20 text-center text-sm text-muted-foreground">
+                {services.length === 0 ? t("no_services_yet") : t("no_match", { q: query })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Edit mode ────────────────────────────────────────────── */}
+        {editMode && (
+          <div className="space-y-10 pb-16">
+            {editGroups.map((group) => {
+              const colors = assignGroupColors(group.items.map((it) => it.svc));
+              return (
+                <section
+                  key={group.name}
+                  onDragOver={(e) => {
+                    if (dragUid === null) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    setDropTarget((cur) =>
+                      cur && cur.group === group.name && cur.beforeUid === null
+                        ? cur
+                        : { group: group.name, beforeUid: null },
+                    );
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (dragUid !== null && dropTarget)
+                      moveDraft(dragUid, dropTarget.group, dropTarget.beforeUid);
+                    finishDrag();
+                  }}
+                  className={`rounded-2xl border p-3 transition-colors ${
+                    dragUid !== null && dropTarget?.group === group.name
+                      ? "border-primary/40 bg-primary/[0.03]"
+                      : "border-transparent"
+                  }`}
+                >
+                  <div className="mb-4 flex items-center gap-3">
+                    <input
+                      value={group.name}
+                      onChange={(e) => renameGroup(group.name, e.target.value)}
+                      className="min-w-0 rounded-md bg-transparent px-1 py-0.5 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground outline-none focus:bg-field focus:text-foreground"
+                      title={t("rename_group")}
+                    />
+                    <div className="h-px flex-1 bg-gradient-to-r from-hairline to-transparent" />
+                    <span className="text-[10px] text-muted-foreground/60">
+                      {group.items.length}
+                    </span>
+                    {group.items.length === 0 && (
+                      <button
+                        onClick={() => removeEmptyGroup(group.name)}
+                        className="rounded-md p-1 text-rose-400/70 hover:bg-rose-500/10 hover:text-rose-400"
+                        title={t("remove_empty_group")}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+                    {group.items.map((it, i) => (
+                      <ServiceCard
+                        key={it.uid}
+                        service={it.svc}
+                        color={colors[i]}
+                        editing
+                        onEdit={() => setEditorUid(it.uid)}
+                        onDelete={() => removeDraft(it.uid)}
+                        onMoveUp={i > 0 ? () => moveWithinGroup(it.uid, -1) : undefined}
+                        onMoveDown={
+                          i < group.items.length - 1 ? () => moveWithinGroup(it.uid, 1) : undefined
+                        }
+                        isDragging={dragUid === it.uid}
+                        showDropIndicator={
+                          dragUid !== null &&
+                          dropTarget?.group === group.name &&
+                          dropTarget.beforeUid === it.uid
+                        }
+                        onDragStart={(e) => {
+                          setDragUid(it.uid);
+                          e.dataTransfer.effectAllowed = "move";
+                        }}
+                        onDragOver={(e) => {
+                          if (dragUid === null) return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.dataTransfer.dropEffect = "move";
+                          setDropTarget((cur) =>
+                            cur && cur.group === group.name && cur.beforeUid === it.uid
+                              ? cur
+                              : { group: group.name, beforeUid: it.uid },
+                          );
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (dragUid !== null) moveDraft(dragUid, group.name, it.uid);
+                          finishDrag();
+                        }}
+                        onDragEnd={finishDrag}
+                      />
+                    ))}
+                    {/* Add-service tile */}
+                    <button
+                      onClick={() => addToGroup(group.name)}
+                      className="flex min-h-[8.5rem] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                      title={t("add_service_group")}
+                    >
+                      <Plus className="h-7 w-7" />
+                      <span className="text-xs">{t("add")}</span>
+                    </button>
+                  </div>
+                </section>
+              );
+            })}
+
+            <button
+              onClick={addGroup}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-hairline py-4 text-sm text-muted-foreground hover:border-primary/50 hover:text-primary"
+            >
+              <FolderPlus className="h-4 w-4" /> {t("new_group")}
+            </button>
+          </div>
+        )}
+
+        {/* Login modal */}
+        {loginOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+            onMouseDown={(e) => e.target === e.currentTarget && setLoginOpen(false)}
+          >
+            <div className="glass-card flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl p-8">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 ring-1 ring-hairline">
+                <Lock className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm text-muted-foreground">{t("enter_password_edit")}</p>
+              <input
+                autoFocus
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && loginPassword && !loginBusy && doLogin()}
+                placeholder={t("password")}
+                className="w-full rounded-lg border border-hairline bg-field px-3 py-2 text-sm text-foreground outline-none focus:border-primary/60"
+              />
+              {loginError && <p className="text-xs text-rose-400">{loginError}</p>}
+              <div className="flex w-full gap-2">
+                <button
+                  onClick={() => setLoginOpen(false)}
+                  className="flex-1 rounded-lg border border-hairline px-4 py-2 text-sm text-foreground hover:bg-fill1"
+                >
+                  {t("cancel")}
+                </button>
+                <button
+                  disabled={!loginPassword || loginBusy}
+                  onClick={doLogin}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                >
+                  {loginBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("continue")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Per-service editor */}
+        {editorItem && (
+          <ServiceEditorModal
+            service={editorItem.svc}
+            isNew={newUids.has(editorItem.uid)}
+            existingGroups={groupNames}
+            autoColor={editorAutoColor}
+            onChange={(svc) => updateDraft(editorItem.uid, svc)}
+            onDuplicate={() => duplicateDraft(editorItem.uid)}
+            onDelete={() => removeDraft(editorItem.uid)}
+            onClose={closeEditor}
+          />
+        )}
+
+        <CommandPalette
+          open={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
+          services={services}
         />
-      )}
-
-      <CommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        services={services}
-      />
-    </main>
+      </main>
+    </StatusProvider>
   );
 }
