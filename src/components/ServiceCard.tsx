@@ -50,12 +50,14 @@ export function ServiceCard({
 
   useEffect(() => setImgError(false), [service.icon]);
 
+  // Ping the same origin the card links to (LAN vs remote aware).
+  const pingTarget = resolveServiceUrl(service);
   useEffect(() => {
     if (!service.isVps || editing) return;
     let mounted = true;
     const run = async () => {
       setLoading(true);
-      const r = await pingService(service.domain);
+      const r = await pingService(pingTarget);
       if (mounted) {
         setStatus(r);
         setLoading(false);
@@ -67,7 +69,7 @@ export function ServiceCard({
       mounted = false;
       clearInterval(interval);
     };
-  }, [service.domain, service.isVps, editing]);
+  }, [pingTarget, service.isVps, editing]);
 
   const iconR = resolveIcon(service);
   const showLogo = (iconR.kind === "logo" || iconR.kind === "url") && !imgError;
@@ -112,17 +114,17 @@ export function ServiceCard({
           <span className="h-2 w-2 animate-pulse rounded-full bg-yellow-400/90" />
         ) : status?.online ? (
           <>
-            <span className="h-2 w-2 rounded-full bg-emerald-400" />
             <span className="text-[10px] font-medium text-emerald-400 opacity-0 transition-opacity group-hover:opacity-100">
               {status.rtt}ms
             </span>
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
           </>
         ) : (
           <>
-            <span className="h-2 w-2 rounded-full bg-rose-500" />
             <span className="text-[10px] font-medium text-rose-400 opacity-0 transition-opacity group-hover:opacity-100">
               {t("offline")}
             </span>
+            <span className="h-2 w-2 rounded-full bg-rose-500" />
           </>
         )}
       </div>

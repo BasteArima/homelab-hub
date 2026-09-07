@@ -126,11 +126,24 @@ export function previewUrls(svc: Service): { local: string; remote: string } {
   };
 }
 
+/**
+ * Reachability check. Pings the SAME origin the card links to (context-aware:
+ * LAN IP:port locally, domain remotely, with each context's protocol/port), so
+ * the status reflects what the user actually reaches instead of always probing
+ * `https://<domain>`. `no-cors` means we only learn whether *something* answered
+ * — not the HTTP status — which is the best a browser can do cross-origin.
+ */
 export async function pingService(
-  domain: string,
+  baseUrl: string,
   timeoutMs = 5000,
 ): Promise<{ online: boolean; rtt: number | null }> {
-  const url = `https://${domain}/favicon.ico?_=${Date.now()}`;
+  let url: string;
+  try {
+    const u = new URL(baseUrl);
+    url = `${u.origin}/favicon.ico?_=${Date.now()}`;
+  } catch {
+    url = baseUrl;
+  }
   const start = performance.now();
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

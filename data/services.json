@@ -7,5 +7,5 @@
   { "id": "shoko", "name": "Shoko", "group": "Media", "icon": "Ticket", "localPort": 8111, "localPath": "/", "domain": "shoko.baste.ru", "isVps": false, "description": "Anime Collection" },
   { "id": "qbittorrent", "name": "qBittorrent", "group": "Apps", "icon": "Download", "localPort": 8282, "localPath": "/", "domain": "qb.baste.ru", "isVps": false, "description": "Torrent Client" },
   { "id": "router", "name": "Router", "group": "Local", "icon": "Router", "localPort": 80, "localPath": "/", "domain": "192.168.0.1", "isVps": false, "description": "Network Gateway" },
-  { "id": "vps1", "name": "VPS 1", "group": "VPS", "icon": "Shield", "localPort": 443, "localPath": "/GygvoVsiyXVNKIp/", "domain": "vapi.baste.ru", "isVps": true, "description": "Primary Node" },
+  { "id": "vps1", "name": "VPS 1", "group": "VPS", "icon": "Shield", "localPort": 443, "localPath": "/GygvoVsiyXVNKIp/", "domain": "vapi.baste.ru", "isVps": true, "description": "Primary Node" }
 ]
