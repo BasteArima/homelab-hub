@@ -6,19 +6,33 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { Readable } from "node:stream";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Load the SSR handler built by TanStack Start (Cloudflare Worker entry).
-const serverMod = await import(
-  path.join(__dirname, "dist/server/index.js")
-);
+/**
+ * Locate the SSR bundle. The filename follows the TanStack Start entry name,
+ * which vite.config.ts overrides to "server" — so don't hard-code one name.
+ */
+function resolveServerEntry() {
+  const dir = path.join(__dirname, "dist/server");
+  for (const name of ["server.js", "index.js"]) {
+    const candidate = path.join(dir, name);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  throw new Error(`No SSR entry (server.js / index.js) found in ${dir} — did the build run?`);
+}
+
+// pathToFileURL: a bare absolute path is not a valid ESM specifier on Windows.
+const serverMod = await import(pathToFileURL(resolveServerEntry()).href);
 const handler = serverMod.default;
 
 const PORT = Number(process.env.PORT) || 3000;
 const CLIENT_DIR = path.join(__dirname, "dist/client");
+
+/** Keep in sync with PEER_HEADER in src/lib/private.server.ts. */
+const PEER_HEADER = "x-peer-ip";
 
 const MIME_TYPES = {
   ".js": "application/javascript",
@@ -60,10 +74,17 @@ const server = http.createServer(async (req, res) => {
   try {
     const headers = new Headers();
     for (const [k, v] of Object.entries(req.headers)) {
-      if (k === "host") continue;
+      const key = k.toLowerCase();
+      // The host travels in the request URL below instead.
+      if (key === "host") continue;
+      // Internal header: a client must never be able to supply its own peer
+      // address, or PRIVATE_MODE could be unlocked from the public internet.
+      if (key === PEER_HEADER) continue;
       if (Array.isArray(v)) v.forEach((val) => headers.append(k, val));
       else if (v) headers.set(k, v);
     }
+    // The real TCP peer, which cannot be forged by the client.
+    headers.set(PEER_HEADER, req.socket.remoteAddress || "");
 
     const request = new Request(`http://${req.headers.host}${req.url}`, {
       method: req.method,
