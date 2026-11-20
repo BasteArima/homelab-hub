@@ -1,11 +1,38 @@
 [
-  { "id": "omv", "name": "OpenMediaVault", "group": "System", "icon": "HardDrive", "localPort": 9315, "localPath": "/", "domain": "omv.baste.ru", "isVps": false, "description": "NAS Dashboard" },
-  { "id": "portainer", "name": "Portainer", "group": "System", "icon": "Container", "localPort": 9000, "localPath": "/", "domain": "portainer.baste.ru", "isVps": false, "description": "Docker Management" },
-  { "id": "npm", "name": "NPM", "group": "System", "icon": "Network", "localPort": 81, "localPath": "/", "domain": "npm.baste.ru", "isVps": false, "description": "Nginx Proxy Manager" },
-  { "id": "plex", "name": "Plex", "group": "Media", "icon": "PlaySquare", "localPort": 32400, "localPath": "/web/index.html#!/", "domain": "plex.baste.ru", "isVps": false, "description": "Media Server" },
-  { "id": "jellyfin", "name": "Jellyfin", "group": "Media", "icon": "Film", "localPort": 8096, "localPath": "/", "domain": "jellyfin.baste.ru", "isVps": false, "description": "Media Streaming" },
-  { "id": "shoko", "name": "Shoko", "group": "Media", "icon": "Ticket", "localPort": 8111, "localPath": "/", "domain": "shoko.baste.ru", "isVps": false, "description": "Anime Collection" },
-  { "id": "qbittorrent", "name": "qBittorrent", "group": "Apps", "icon": "Download", "localPort": 8282, "localPath": "/", "domain": "qb.baste.ru", "isVps": false, "description": "Torrent Client" },
-  { "id": "router", "name": "Router", "group": "Local", "icon": "Router", "localPort": 80, "localPath": "/", "domain": "192.168.0.1", "isVps": false, "description": "Network Gateway" },
-  { "id": "vps1", "name": "VPS 1", "group": "VPS", "icon": "Shield", "localPort": 443, "localPath": "/GygvoVsiyXVNKIp/", "domain": "vapi.baste.ru", "isVps": true, "description": "Primary Node" }
+  {
+    "id": "demo-media",
+    "name": "Media Library",
+    "group": "Media",
+    "icon": "lucide:Film",
+    "localHost": "media.home.example",
+    "localPort": 8096,
+    "localPath": "/",
+    "domain": "media.example",
+    "isVps": false,
+    "description": "Example library for movies and music"
+  },
+  {
+    "id": "demo-files",
+    "name": "File Browser",
+    "group": "Storage",
+    "icon": "lucide:FolderOpen",
+    "localHost": "files.home.example",
+    "localPort": 8080,
+    "localPath": "/",
+    "domain": "files.example",
+    "isVps": false,
+    "description": "Example dashboard for shared files"
+  },
+  {
+    "id": "demo-monitoring",
+    "name": "Monitoring",
+    "group": "System",
+    "icon": "lucide:Activity",
+    "localHost": "monitoring.home.example",
+    "localPort": 3000,
+    "localPath": "/",
+    "domain": "monitoring.example",
+    "isVps": false,
+    "description": "Example dashboard for service metrics"
+  }
 ]

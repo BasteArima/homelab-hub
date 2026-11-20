@@ -10,3 +10,4 @@ dist
 .idea
 
 public/logos
+data/*.fixture.json
